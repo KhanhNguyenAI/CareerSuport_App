@@ -4,236 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>就職活動対策 | IT学習コーチ</title>
-  <style>
-    :root {
-      --bg: #0a0c14;
-      --surface: #111420;
-      --surface2: #1a1e30;
-      --border: #252a42;
-      --color: #48cfad;
-      --text: #e8eaf6;
-      --text-sub: #7880a0;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-      gap: 32px;
-    }
-
-    .back-btn {
-      position: fixed;
-      top: 20px; left: 24px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-sub);
-      text-decoration: none;
-      padding: 7px 16px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--surface);
-      transition: all 0.2s;
-    }
-    .back-btn:hover { color: var(--text); border-color: var(--color); }
-
-    .badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 5px 14px;
-      border-radius: 20px;
-      background: rgba(72,207,173,0.1);
-      border: 1px solid rgba(72,207,173,0.25);
-      color: var(--color);
-    }
-
-    h1 {
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 40%, #48cfad);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-align: center;
-    }
-
-    .sub {
-      color: var(--text-sub);
-      font-size: 0.9rem;
-      text-align: center;
-      max-width: 440px;
-      line-height: 1.65;
-    }
-
-    .coming-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 540px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .coming-icon {
-      font-size: 3rem;
-      margin-bottom: 16px;
-    }
-
-    .coming-card h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .coming-card p {
-      font-size: 0.83rem;
-      color: var(--text-sub);
-      line-height: 1.7;
-      margin-bottom: 24px;
-    }
-
-    .feature-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      text-align: left;
-    }
-
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: 0.83rem;
-    }
-
-    .feature-item .fi-icon {
-      font-size: 1.2rem;
-      width: 28px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-
-    .feature-item div strong {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 2px;
-    }
-
-    .feature-item div span {
-      font-size: 0.75rem;
-      color: var(--text-sub);
-    }
-
-    .progress-bar-wrap {
-      margin-top: 28px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      height: 8px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 35%;
-      background: linear-gradient(90deg, var(--color), #6c63ff);
-      border-radius: 8px;
-      animation: pulse-width 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes pulse-width {
-      from { width: 30%; }
-      to   { width: 42%; }
-    }
-
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 0.72rem;
-      color: var(--text-sub);
-    }
-  </style>
+  <link rel="stylesheet" href="interview.css">
 </head>
 <body>
 
-  <a href="index.html" class="back-btn">← ホームへ戻る</a>
-
-  <span class="badge">🚧 Coming Soon — Part 2</span>
-
-  <h1>就職活動対策</h1>
-
-  <p class="sub">IT新卒向けの面接シミュレーター。Gemini AIとリアルタイム対話で本番の面接に備えます。</p>
-
-  <div class="coming-card">
-    <div class="coming-icon">🎤</div>
-    <h2>開発中の機能</h2>
-    <p>以下の機能を現在開発中です。もうしばらくお待ちください。</p>
-
-    <div class="feature-list">
-      <div class="feature-item">
-        <span class="fi-icon">1️⃣</span>
-        <div>
-          <strong>書類・一次面接シミュレーター</strong>
-          <span>自己紹介・志望動機・強み弱みをAIが評価</span>
-        </div>
-      </div>
-      <div class="feature-item">
-        <span class="fi-icon">2️⃣</span>
-        <div>
-          <strong>人事面接トレーニング</strong>
-          <span>STAR法・キャリアプラン・企業研究の練習</span>
-        </div>
-      </div>
-      <div class="feature-item">
-        <span class="fi-icon">3️⃣</span>
-        <div>
-          <strong>技術面接シミュレーター</strong>
-          <span>IT基礎知識・開発経験・コーディング問題</span>
-        </div>
-      </div>
-      <div class="feature-item">
-        <span class="fi-icon">🎤</span>
-        <div>
-          <strong>音声対話モード</strong>
-          <span>Gemini AI + Text-to-Speech でリアルな練習</span>
-        </div>
-      </div>
-      <div class="feature-item">
-        <span class="fi-icon">💡</span>
-        <div>
-          <strong>回答フィードバック</strong>
-          <span>AIが内容・構成・表現を採点してアドバイス</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill"></div>
-    </div>
-    <div class="progress-label">
-      <span>開発進捗</span>
-      <span>〜35%</span>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">💼</div>
+      <h2>就職活動対策</h2>
+      <p>Googleアカウントでログインして面接練習を始めましょう</p>
+      <button class="btn-google-login" id="btn-login">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Googleでログイン
+      </button>
+      <p class="login-note">ログインすることで学習進捗がクラウドに同期されます</p>
+      <a href="index.html" class="btn-back-home">← ホームに戻る</a>
     </div>
   </div>
 
+  <!-- Main App -->
+  <div id="app" style="display:none">
+
+    <header>
+      <div class="logo">💼</div>
+      <h1>就職活動対策</h1>
+      <div class="header-actions">
+        <button class="btn-profile" id="btn-open-profile">
+          <img id="header-avatar-img" src="" alt="" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover">
+          <span id="header-avatar-emoji">👤</span>
+          <span id="header-name">プロフィール</span>
+        </button>
+        <a href="index.html" class="back-btn">← ホームへ</a>
+        <button class="btn-logout" id="btn-logout">ログアウト</button>
+      </div>
+    </header>
+
+    <div class="container">
+
+      <div class="page-title">🎤 就職活動対策</div>
+      <p class="page-sub">書類準備から面接シミュレーションまで、IT就活を徹底サポートします。</p>
+
+      <!-- Main Tab Bar -->
+      <div class="main-tabs">
+        <button class="main-tab-btn active" data-tab="tab-docs" onclick="switchMainTab('tab-docs')">
+          📄 書類準備
+        </button>
+        <button class="main-tab-btn" data-tab="tab-interview" onclick="switchMainTab('tab-interview')">
+          🎤 一次面接シミュレーター
+        </button>
+      </div>
+
+      <!-- ── Tab: 書類準備 ── -->
+      <div class="main-tab-content active" id="tab-docs">
+
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:14px">
+          📑 必要書類テンプレート
+        </div>
+
+        <div class="doc-grid">
+          <a class="doc-card" href="https://rirekisho.yagish.jp/format/rirekisho_job_change" target="_blank" rel="noopener">
+            <div class="doc-card-icon">📋</div>
+            <div class="doc-card-name">履歴書</div>
+            <div class="doc-card-desc">
+              基本的な個人情報・学歴・職歴・資格・自己PRをまとめる書類。
+              yagishの無料テンプレートで簡単作成できます。
+            </div>
+            <div class="doc-card-link">テンプレートを見る →</div>
+          </a>
+
+          <a class="doc-card" href="https://rirekisho.yagish.jp/format/shokumukeirekisho" target="_blank" rel="noopener">
+            <div class="doc-card-icon">📝</div>
+            <div class="doc-card-name">職務経歴書</div>
+            <div class="doc-card-desc">
+              これまでの職務経験・スキル・実績を詳しく記載する書類。
+              新卒・第二新卒向けフォーマットも揃っています。
+            </div>
+            <div class="doc-card-link">テンプレートを見る →</div>
+          </a>
+        </div>
+
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;margin-top:28px">
+          💡 書類作成のポイント
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start">
+            <span style="font-size:1.3rem;flex-shrink:0">✍️</span>
+            <div>
+              <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">誤字・脱字をなくす</div>
+              <div style="font-size:0.78rem;color:var(--text-sub);line-height:1.6">提出前に必ず2〜3回見直す。友人や先生に確認してもらうと安心。</div>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start">
+            <span style="font-size:1.3rem;flex-shrink:0">🎯</span>
+            <div>
+              <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">志望企業に合わせてカスタマイズ</div>
+              <div style="font-size:0.78rem;color:var(--text-sub);line-height:1.6">自己PRや志望動機は企業ごとに書き直す。汎用的な内容は印象が薄い。</div>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start">
+            <span style="font-size:1.3rem;flex-shrink:0">📊</span>
+            <div>
+              <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">数字・実績を入れる</div>
+              <div style="font-size:0.78rem;color:var(--text-sub);line-height:1.6">「〜に貢献した」より「〜を〇%改善した」「〇人チームでリーダーを担当」など具体的な数字が有効。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: 一次面接 ── -->
+      <div class="main-tab-content" id="tab-interview">
+
+        <!-- Student type toggle -->
+        <div class="student-toggle">
+          <button class="student-btn active" data-type="domestic" onclick="setStudentType('domestic')">
+            🎓 国内学生
+          </button>
+          <button class="student-btn" data-type="international" onclick="setStudentType('international')">
+            ✈️ 留学生
+          </button>
+        </div>
+
+        <!-- Interview content -->
+        <div class="interview-wrap" id="interview-wrap"></div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script src="interview.js"></script>
+  <script type="module" src="interview-app.js"></script>
 </body>
 </html>
