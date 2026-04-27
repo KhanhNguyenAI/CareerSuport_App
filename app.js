@@ -132,6 +132,7 @@ btnLogin?.addEventListener('click', async () => {
 
 btnLogout?.addEventListener('click', async () => {
   await logout();
+  window.location.href = 'index.html';
 });
 
 // ─────────────────────────────────────
