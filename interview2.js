@@ -517,41 +517,64 @@ function startListening() {
   recognition.continuous     = true;
   recognition.interimResults = true;
 
-  const btn    = document.getElementById('btn-voice');
-  const status = document.getElementById('voice-status');
-  const input  = document.getElementById('i2-answer-input');
-
   recognition.onstart = () => {
     isListening = true;
-    btn.style.borderColor = 'var(--accent4)';
-    btn.style.color       = 'var(--accent4)';
-    btn.innerHTML = '⏹️ 録音を停止する';
+    const btn   = document.getElementById('btn-voice');
+    const status = document.getElementById('voice-status');
+    const input  = document.getElementById('i2-answer-input');
+    if (btn) {
+      btn.style.borderColor = 'var(--accent4)';
+      btn.style.color       = 'var(--accent4)';
+      btn.innerHTML = '⏹️ 録音を停止する';
+    }
     if (status) status.textContent = '🔴 録音中... 話してください';
-    interimText = input.value;
+    interimText = input ? input.value : '';
   };
 
   recognition.onresult = (e) => {
-    let interim = '';
-    let final   = '';
+    // Re-query DOM each time to avoid stale reference
+    const input = document.getElementById('i2-answer-input');
+    if (!input) return;
+
+    let interim  = '';
+    let finalStr = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
-        final += e.results[i][0].transcript;
+        finalStr += e.results[i][0].transcript;
       } else {
         interim += e.results[i][0].transcript;
       }
     }
-    if (final) interimText += final;
+    if (finalStr) interimText += finalStr;
     input.value = interimText + interim;
+
+    // Show interim text in status
+    const status = document.getElementById('voice-status');
+    if (status && interim) status.textContent = `🔴 認識中: ${interim}`;
   };
 
   recognition.onerror = (e) => {
-    if (e.error === 'no-speech') return;
+    const status = document.getElementById('voice-status');
+    if (e.error === 'no-speech') {
+      // no-speech is normal — just keep listening
+      return;
+    }
+    if (e.error === 'aborted') return;
     if (status) status.textContent = `⚠️ エラー: ${e.error}`;
-    stopListening();
+    isListening = false;
+    const btn = document.getElementById('btn-voice');
+    if (btn) {
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color       = 'var(--text)';
+      btn.innerHTML = '🎤 マイクで回答する';
+    }
   };
 
   recognition.onend = () => {
-    if (isListening) stopListening();
+    // Chrome stops recognition on silence even with continuous:true — restart it
+    if (isListening) {
+      try { recognition.start(); } catch (err) { /* already started */ }
+    }
   };
 
   recognition.start();
