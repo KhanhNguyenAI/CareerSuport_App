@@ -268,40 +268,57 @@ async function analyzeES() {
 応募者：${p.name || '就活生'} / ${p.status || '学生'}
 
 【ES内容】
-${esContent}
+${esContent.slice(0, 2000)}
 
-以下の形式で、必ず6つの質問を出力してください：
+必ず以下の形式だけで出力してください。余計な説明や前置きは不要です：
 
-[Q1]
-（ES内の自己PRや強みに関連した深堀り質問）
-
-[Q2]
-（ES内の学生時代の経験・エピソードへの深堀り）
-
-[Q3]
-（ES内の志望動機に関連した質問）
-
-[Q4]
-（困難な経験・克服方法に関する質問）
-
-[Q5]
-（チームワーク・リーダーシップに関する質問）
-
-[Q6]
-（入社後のビジョン・キャリアプランに関する質問）
+Q1: （ES内の自己PRや強みに関連した深堀り質問をここに書く）
+Q2: （ES内の学生時代の経験・エピソードへの深堀り質問をここに書く）
+Q3: （ES内の志望動機に関連した質問をここに書く）
+Q4: （困難な経験・克服方法に関する質問をここに書く）
+Q5: （チームワーク・リーダーシップに関する質問をここに書く）
+Q6: （入社後のビジョン・キャリアプランに関する質問をここに書く）
 
 各質問は自然な日本語で、面接官らしい丁寧な口調で書いてください。`.trim();
 
   try {
     const text = await geminiRequest2(prompt, 1024);
 
-    // Parse questions
+    // Parse questions — try multiple formats for robustness
     i2Questions = [];
-    const regex = /\[Q(\d+)\]\s*([\s\S]*?)(?=\[Q\d+\]|$)/g;
-    let m;
-    while ((m = regex.exec(text)) !== null) {
-      const q = m[2].trim();
+
+    // Format 1: "Q1: question" or "Q1. question"
+    const regex1 = /Q(\d+)[:.：]\s*(.+)/g;
+    let m1;
+    while ((m1 = regex1.exec(text)) !== null) {
+      const q = m1[2].trim();
       if (q) i2Questions.push(q);
+    }
+
+    // Format 2 fallback: "[Q1] question" or "[Q1]\nquestion"
+    if (i2Questions.length === 0) {
+      const regex2 = /\[Q(\d+)\][^\S\r\n]*:?\s*([\s\S]*?)(?=\[Q\d+\]|$)/g;
+      let m2;
+      while ((m2 = regex2.exec(text)) !== null) {
+        const q = m2[2].trim();
+        if (q) i2Questions.push(q);
+      }
+    }
+
+    // Format 3 fallback: numbered lines "1. question" or "1) question"
+    if (i2Questions.length === 0) {
+      const regex3 = /^\s*\d+[.)]\s*(.+)/gm;
+      let m3;
+      while ((m3 = regex3.exec(text)) !== null) {
+        const q = m3[1].trim();
+        if (q.length > 10) i2Questions.push(q);
+      }
+    }
+
+    // Format 4 fallback: split by question marks — find sentences ending with ？
+    if (i2Questions.length === 0) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.endsWith('？') || l.endsWith('?'));
+      i2Questions = lines.slice(0, 6);
     }
 
     if (i2Questions.length === 0) throw new Error('質問の生成に失敗しました');
