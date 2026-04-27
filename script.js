@@ -5,7 +5,7 @@
 const GEMINI_API_KEY = 'AIzaSyC8pLmEurPIjYYDIJm2vYgsNITN4XwRKNg';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v6';
 const GEMINI_CACHE_KEY = 'gemini_cache';
 
 // ─────────────────────────────────────
@@ -143,7 +143,7 @@ function setCache(key, text) {
   } catch {}
 }
 
-async function askGemini(prompt, cacheKey = null, retries = 2, delayMs = 2000) {
+async function askGemini(prompt, cacheKey = null, retries = 2, delayMs = 2000, maxTokens = 1024) {
   const key = cacheKey || prompt;
   const cached = getCached(key);
   if (cached) return cached;
@@ -154,12 +154,16 @@ async function askGemini(prompt, cacheKey = null, retries = 2, delayMs = 2000) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+        generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
       })
     });
     if (res.status === 429) {
       if (attempt < retries) { await new Promise(r => setTimeout(r, delayMs * (attempt + 1))); continue; }
       throw new Error('RATE_LIMIT');
+    }
+    if (res.status === 503 || res.status === 502 || res.status === 500) {
+      if (attempt < retries) { await new Promise(r => setTimeout(r, delayMs * (attempt + 1))); continue; }
+      throw new Error('SERVER_ERROR');
     }
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const json = await res.json();
@@ -271,9 +275,14 @@ function saveProfile() {
 
 function updateHeaderProfile() {
   const p = getProfile();
-  if (p.name) {
-    document.getElementById('header-name').textContent = p.name;
-    document.getElementById('header-avatar').textContent = '😊';
+  const nameEl = document.getElementById('header-name');
+  const avatarEl = document.getElementById('header-avatar-emoji');
+  
+  if (p.name && nameEl) {
+    nameEl.textContent = p.name;
+  }
+  if (avatarEl) {
+    avatarEl.textContent = '😊';
   }
 }
 
@@ -285,21 +294,33 @@ function renderVocabList() {
     el.innerHTML = `<p class="empty-msg" style="margin-top:8px">まだ保存した用語はありません。</p>`;
     return;
   }
-  el.innerHTML = notes.map(n => {
+  el.innerHTML = notes.map((n, i) => {
     const cert = CERTS.find(c => c.id === n.certId);
     const date = new Date(n.savedAt).toLocaleDateString('ja-JP');
     return `
       <div class="vocab-item">
-        <div class="vocab-item-top">
+        <div class="vocab-item-top" onclick="toggleVocabDetail(${i})" style="cursor:pointer">
           <span class="vocab-cert-tag" style="color:${cert?.color || '#8892b0'}">${cert?.icon || ''} ${cert?.name || ''}</span>
           <span class="vocab-date">${date}</span>
-          <button class="vocab-delete" onclick="deleteVocabNote('${n.term}','${n.certId}')">✕</button>
+          <span class="vocab-toggle-icon" id="vocab-icon-${i}">▶</span>
+          <button class="vocab-delete" onclick="event.stopPropagation();deleteVocabNote('${n.term}','${n.certId}')">✕</button>
         </div>
-        <div class="vocab-term">${n.term}</div>
-        <div class="vocab-explanation">${n.explanation}</div>
+        <div class="vocab-term" onclick="toggleVocabDetail(${i})" style="cursor:pointer">${n.term}</div>
+        <div class="vocab-detail" id="vocab-detail-${i}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          ${formatGeminiText(n.explanation)}
+        </div>
       </div>
     `;
   }).join('');
+}
+
+function toggleVocabDetail(i) {
+  const detail = document.getElementById(`vocab-detail-${i}`);
+  const icon   = document.getElementById(`vocab-icon-${i}`);
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  if (icon) icon.textContent = isOpen ? '▶' : '▼';
 }
 
 // ─────────────────────────────────────
@@ -365,6 +386,8 @@ function renderDetail(cert) {
     <div id="tab-strategy" class="tab-content">${renderStrategyTab(cert)}</div>
     <div id="tab-glossary" class="tab-content">${renderGlossary(cert)}</div>
   `;
+  // Init saved vocab history after DOM is ready
+  initGlossaryHistory(cert.id, cert.name);
   setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
@@ -492,39 +515,29 @@ async function generateStrategy(certId) {
 
   const cacheKey = `strategy:${certId}:${p.name}:${targetDate || 'nodate'}:${p.status}`;
 
-  const prompt = `
-あなたはIT資格試験の学習コーチです。以下のユーザー情報をもとに、${cert.name}の合格に向けたパーソナライズされた学習戦略を作成してください。
+  const prompt = `あなたはIT資格試験の学習コーチです。${cert.name}の合格に向けた学習戦略を作成してください。
 
-【ユーザー情報】
-- 名前：${p.name}
-- 年齢：${p.age || '未回答'}
-- 現在の状況：${p.status || '未回答'}
-- 学習目標：${p.goal || '未回答'}
-- 受験予定日まで：${daysLeft !== null ? daysLeft + '日' : '未設定'}
+ユーザー：${p.name}／${p.age || '年齢不明'}／${p.status || '状況不明'}
+目標：${p.goal || '未設定'}
+受験まで：${daysLeft !== null ? daysLeft + '日' : '未設定'}
+試験形式：${cert.exam.format}／合格基準：${cert.exam.passing}
 
-【試験情報】
-- 試験名：${cert.name}
-- 受験料：${cert.exam.fee}
-- 形式：${cert.exam.format}
-- 合格基準：${cert.exam.passing}
-
-必ず以下の4つのブロックだけを出力してください：
+以下の4ブロックのみ出力（各ブロックは必ず書くこと）：
 
 [現状分析]
-（ユーザーの状況を踏まえた一言コメント、1〜2文）
+ユーザーの状況を踏まえた分析（2〜3文）
 
 [推奨学習スケジュール]
-（残り日数・状況に合わせた週単位の具体的スケジュール、3〜5ステップ）
+残り日数に合わせた週単位スケジュール（4〜5ステップ、各ステップ1文）
 
 [重点学習分野]
-（この人が特に注意すべき分野と理由、2〜3つ）
+優先すべき分野と理由（3つ、各1〜2文）
 
 [モチベーション維持のコツ]
-（この人の状況に合わせた具体的なアドバイス、1〜2文）
-`.trim();
+この人向けの具体的アドバイス（2〜3文）`.trim();
 
   try {
-    const text = await askGemini(prompt, cacheKey);
+    const text = await askGemini(prompt, cacheKey, 2, 2000, 2048);
     result.innerHTML = `
       <div class="strategy-result-wrap">
         <div class="strategy-ai-label">✨ Gemini AI による個人最適化戦略</div>
@@ -535,7 +548,14 @@ async function generateStrategy(certId) {
       </div>
     `;
   } catch (e) {
-    result.innerHTML = `<div class="glossary-error">${e.message === 'RATE_LIMIT' ? '⏳ しばらく待ってから再試行してください。' : '⚠️ エラー: ' + e.message}</div>`;
+    const msg = e.message === 'RATE_LIMIT'
+      ? '⏳ <strong>リクエスト制限です。</strong><br><span style="font-size:0.78rem">1分ほど待ってから再試行してください。</span>'
+      : e.message === 'SERVER_ERROR'
+      ? '🔄 <strong>AIサーバーが混雑しています。</strong><br><span style="font-size:0.78rem">しばらく待ってから「再生成する」を押してください。</span>'
+      : `⚠️ エラー: ${e.message}`;
+    result.innerHTML = `<div class="glossary-error">${msg}<br><br>
+      <button class="btn-regen" onclick="regenStrategy('${certId}')" style="color:${cert.color}">🔄 再試行する</button>
+    </div>`;
   }
 }
 
@@ -583,11 +603,12 @@ function formatStrategyText(text) {
 }
 
 // ─────────────────────────────────────
-// Tab: Glossary (AI + History)
+// Tab: Glossary (AI + Saved Notes)
 // ─────────────────────────────────────
 
-// Per-session history (reset on page reload)
-let glossaryHistory = [];
+// Temp store: full Gemini raw text keyed by "certId:term"
+// Used so handleSaveVocab can save the full explanation, not just a snippet
+const _pendingGlossary = {};
 
 function renderGlossary(cert) {
   return `
@@ -596,7 +617,7 @@ function renderGlossary(cert) {
       <div class="glossary-box">
         <div class="glossary-header">
           <span class="glossary-ai-badge">✨ Gemini AI</span>
-          <p>わからない用語を入力すると、AIが${cert.name}の試験に合わせてわかりやすく解説します。</p>
+          <p>わからない用語を入力すると、AIが${cert.name}の試験に合わせてわかりやすく解説します。保存済みの用語はDBから即座に表示します。</p>
         </div>
         <div class="glossary-input-row">
           <input type="text" id="glossary-input"
@@ -612,15 +633,71 @@ function renderGlossary(cert) {
         <div id="glossary-result" class="glossary-result" style="display:none"></div>
       </div>
 
-      <!-- History -->
+      <!-- Saved vocab as history -->
       <div class="glossary-history-box">
-        <div class="glossary-history-title">🕘 検索履歴</div>
-        <div id="glossary-history-list">
-          <p class="empty-msg">まだ検索した用語はありません。</p>
-        </div>
+        <div class="glossary-history-title">💾 保存済み用語</div>
+        <div id="glossary-history-list"></div>
       </div>
     </div>
   `;
+}
+
+// Called after renderGlossary is injected into DOM
+function initGlossaryHistory(certId, certName) {
+  renderSavedVocabHistory(certId, certName);
+}
+
+function renderSavedVocabHistory(certId, certName) {
+  const el = document.getElementById('glossary-history-list');
+  if (!el) return;
+  const notes = getVocabNotes().filter(n => n.certId === certId);
+  if (!notes.length) {
+    el.innerHTML = `<p class="empty-msg">まだ保存した用語はありません。</p>`;
+    return;
+  }
+  const cert = CERTS.find(c => c.id === certId);
+  el.innerHTML = notes.map(n => `
+    <div class="history-item">
+      <button class="history-term" onclick="showSavedVocab('${n.certId}','${encodeURIComponent(n.term)}','${certName}')">${n.term}</button>
+      <span class="history-cert" style="color:${cert?.color}">${cert?.icon} ${cert?.name}</span>
+      <span class="history-saved">💾 保存済み</span>
+    </div>
+  `).join('');
+}
+
+function showSavedVocab(certId, encodedTerm, certName) {
+  const term = decodeURIComponent(encodedTerm);
+  const note = getVocabNotes().find(n => n.certId === certId && n.term === term);
+  if (!note) return;
+
+  // Fill input
+  const input = document.getElementById('glossary-input');
+  if (input) input.value = term;
+
+  // Display saved explanation
+  const result = document.getElementById('glossary-result');
+  if (!result) return;
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="glossary-term-title">
+      📖 「${term}」の解説
+      <span class="cache-badge">💾 保存済み</span>
+    </div>
+    <div class="glossary-content">${formatGeminiText(note.explanation)}</div>
+    <div class="save-prompt" style="justify-content:flex-end">
+      <button class="btn-save-vocab btn-delete-vocab"
+        onclick="handleDeleteFromGlossary('${certId}','${encodeURIComponent(term)}','${certName}',this)">
+        🗑️ ノートから削除
+      </button>
+    </div>
+  `;
+}
+
+function handleDeleteFromGlossary(certId, encodedTerm, certName, btn) {
+  const term = decodeURIComponent(encodedTerm);
+  window.deleteVocabNote(term, certId);
+  btn.closest('.save-prompt').innerHTML = '<span style="color:var(--text-sub);font-size:0.8rem">🗑️ 削除しました</span>';
+  renderSavedVocabHistory(certId, certName);
 }
 
 function getQuickTerms(certId) {
@@ -640,95 +717,146 @@ function fillAndAsk(certId, certName, term) {
 
 async function askGlossary(certId, certName) {
   const input = document.getElementById('glossary-input');
-  const term = input.value.trim();
+  const term  = input.value.trim();
   if (!term) return;
 
   const result = document.getElementById('glossary-result');
-  const isCached = !!getCached(`${certId}:${term}`);
   result.style.display = 'block';
-  result.innerHTML = `<div class="glossary-loading"><span class="spinner"></span> ${isCached ? 'キャッシュから読み込み中...' : 'AIが解説を生成中...'}</div>`;
 
-  const prompt = `
-あなたは${certName}の試験対策コーチです。
-用語「${term}」を、勉強中の学生にわかりやすく教えてください。
-
-必ず以下の4つのブロックだけを出力してください：
-
-[一言で言うと]
-（1文で超シンプルに）
-
-[もう少し詳しく]
-（2文で具体例を使って説明）
-
-[試験ではこう出る]
-（どんな選択肢や問題形式で出題されるか1〜2文）
-
-[覚え方のコツ]
-（語呂合わせ・比喩・イメージなど、1文で）
-`.trim();
-
-  try {
-    const cacheKey = `${certId}:${term}`;
-    const text = await askGemini(prompt, cacheKey);
-    const formattedHtml = formatGeminiText(text);
-    const shortExplanation = text.split('\n').find(l => l.trim() && !l.startsWith('[')) || text.slice(0, 80);
-
+  // ── 1. Kiểm tra vocabNotes cá nhân — hiển thị ngay, không gọi AI ──
+  const savedNote = getVocabNotes().find(n => n.certId === certId && n.term === term);
+  if (savedNote && savedNote.explanation) {
     result.innerHTML = `
       <div class="glossary-term-title">
         📖 「${term}」の解説
-        ${getCached(cacheKey) ? '<span class="cache-badge">💾 キャッシュ済み</span>' : ''}
+        <span class="cache-badge">💾 保存済み</span>
       </div>
-      <div class="glossary-content">${formattedHtml}</div>
+      <div class="glossary-content">${formatGeminiText(savedNote.explanation)}</div>
+      <div class="save-prompt" style="justify-content:flex-end">
+        <button class="btn-save-vocab btn-delete-vocab"
+          onclick="handleDeleteFromGlossary('${certId}','${encodeURIComponent(term)}','${certName}',this)">
+          🗑️ ノートから削除
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // ── 2. Kiểm tra global vocab cache trên Firestore ──
+  result.innerHTML = `<div class="glossary-loading"><span class="spinner"></span> DBを確認中...</div>`;
+  const globalEntry = window.getGlobalVocab ? await window.getGlobalVocab(certId, term) : null;
+  if (globalEntry && globalEntry.explanation) {
+    _pendingGlossary[`${certId}:${term}`] = globalEntry.explanation;
+    const alreadySaved = getVocabNotes().some(n => n.certId === certId && n.term === term);
+    result.innerHTML = `
+      <div class="glossary-term-title">
+        📖 「${term}」の解説
+        <span class="cache-badge" style="background:rgba(72,207,173,0.15);color:var(--accent2)">🌐 共有キャッシュ</span>
+      </div>
+      <div class="glossary-content">${formatGeminiText(globalEntry.explanation)}</div>
       <div class="save-prompt">
         <span>📌 この用語をノートに保存しますか？</span>
-        <button class="btn-save-vocab" onclick="handleSaveVocab('${certId}','${term}',\`${shortExplanation.replace(/`/g,"'")}\`,this)">
-          保存する
+        <button class="btn-save-vocab"
+          onclick="handleSaveVocab('${certId}','${encodeURIComponent(term)}','${certName}',this)"
+          ${alreadySaved ? 'disabled' : ''}>
+          ${alreadySaved ? '✅ 保存済み' : '保存する'}
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // ── 3. Chưa có trong DB → gọi Gemini AI ──
+  const isCached = !!getCached(`${certId}:${term}`);
+  result.innerHTML = `<div class="glossary-loading"><span class="spinner"></span> ${isCached ? 'キャッシュから読み込み中...' : 'AIが解説を生成中...'}</div>`;
+
+  const prompt = `あなたは${certName}の試験対策の専門コーチです。
+
+まず、入力された「${term}」がIT・情報技術・コンピュータサイエンス・ビジネスIT・${certName}試験に関連する用語かどうかを判断してください。
+関係のない日常会話・料理・スポーツ・その他の全く無関係な内容の場合は、[NOT_IT_TERM] とだけ出力して終了してください。
+
+IT用語の場合のみ、以下の4ブロックを全て出力してください：
+
+[一言で言うと]
+専門用語を使わず、日常の言葉だけで1〜2文。
+
+[具体例で理解する]
+理解を深めるために、現実の具体的な例・場面・ストーリーを使って説明してください。
+似た概念・対比概念がある場合は「〇〇との違い」も必ず書くこと。
+説明が長くなっても構いません。意味が伝わることを最優先にしてください（目安500字以内）。
+
+[試験ではこう出る]
+${certName}の試験でどのように出題されるか（選択肢の引っかけパターン・頻出の問われ方）を具体的に説明してください。
+
+[覚え方のコツ]
+語呂合わせ・比喩・図解イメージ・ストーリーなど、記憶に残る覚え方を書いてください。`.trim();
+
+  try {
+    const cacheKey = `${certId}:${term}`;
+    const text = await askGemini(prompt, cacheKey, 2, 2000, 3000);
+
+    // IT用語でない場合
+    if (text.trim().startsWith('[NOT_IT_TERM]')) {
+      result.innerHTML = `
+        <div class="glossary-error" style="text-align:center;padding:20px 0">
+          <div style="font-size:2rem;margin-bottom:8px">🚫</div>
+          <strong>「${term}」はIT用語ではありません</strong><br>
+          <span style="font-size:0.78rem;color:var(--text-sub)">
+            ${certName}の試験に関連するIT・コンピュータ用語を入力してください。
+          </span>
+        </div>`;
+      // NOT_IT_TERMはキャッシュしない
+      try {
+        const cache = JSON.parse(localStorage.getItem(GEMINI_CACHE_KEY) || '{}');
+        delete cache[cacheKey];
+        localStorage.setItem(GEMINI_CACHE_KEY, JSON.stringify(cache));
+      } catch {}
+      return;
+    }
+
+    // IT用語 → globalVocab に保存（全ユーザー共有）
+    _pendingGlossary[cacheKey] = text;
+    if (window.saveGlobalVocab) window.saveGlobalVocab(certId, term, text);
+
+    const alreadySaved = getVocabNotes().some(n => n.certId === certId && n.term === term);
+    result.innerHTML = `
+      <div class="glossary-term-title">
+        📖 「${term}」の解説
+        ${isCached ? '<span class="cache-badge">💾 キャッシュ済み</span>' : ''}
+      </div>
+      <div class="glossary-content">${formatGeminiText(text)}</div>
+      <div class="save-prompt">
+        <span>📌 この用語をノートに保存しますか？</span>
+        <button class="btn-save-vocab"
+          onclick="handleSaveVocab('${certId}','${encodeURIComponent(term)}','${certName}',this)"
+          ${alreadySaved ? 'disabled' : ''}>
+          ${alreadySaved ? '✅ 保存済み' : '保存する'}
         </button>
       </div>
     `;
 
-    // Add to session history
-    addToHistory(certId, certName, term);
-
   } catch (e) {
-    result.innerHTML = e.message === 'RATE_LIMIT'
-      ? `<div class="glossary-error">⏳ <strong>リクエスト制限です。</strong><br><span style="font-size:0.78rem">1分ほど待ってから再度お試しください。</span></div>`
-      : `<div class="glossary-error">⚠️ エラー: ${e.message}</div>`;
+    const msg = e.message === 'RATE_LIMIT'
+      ? '⏳ <strong>リクエスト制限です。</strong><br><span style="font-size:0.78rem">1分ほど待ってから再度お試しください。</span>'
+      : e.message === 'SERVER_ERROR'
+      ? '🔄 <strong>AIサーバーが混雑しています。</strong><br><span style="font-size:0.78rem">しばらく待ってからもう一度お試しください。</span>'
+      : `⚠️ エラー: ${e.message}`;
+    result.innerHTML = `<div class="glossary-error">${msg}</div>`;
   }
 }
 
-function handleSaveVocab(certId, term, explanation, btn) {
-  saveVocabNote(certId, term, explanation);
+function handleSaveVocab(certId, encodedTerm, certName, btn) {
+  const term      = decodeURIComponent(encodedTerm);
+  const cacheKey  = `${certId}:${term}`;
+  // Lấy full explanation từ _pendingGlossary (Gemini raw text)
+  const fullText  = _pendingGlossary[cacheKey] || getCached(cacheKey) || term;
+
+  window.saveVocabNote(certId, term, fullText);
   btn.textContent = '✅ 保存しました';
-  btn.disabled = true;
-}
+  btn.disabled    = true;
 
-function addToHistory(certId, certName, term) {
-  // Remove duplicate
-  glossaryHistory = glossaryHistory.filter(h => !(h.term === term && h.certId === certId));
-  glossaryHistory.unshift({ certId, certName, term, time: new Date() });
-  renderHistory();
-}
-
-function renderHistory() {
-  const el = document.getElementById('glossary-history-list');
-  if (!el) return;
-  if (!glossaryHistory.length) {
-    el.innerHTML = `<p class="empty-msg">まだ検索した用語はありません。</p>`;
-    return;
-  }
-  const cert = CERTS.find(c => c.id === glossaryHistory[0]?.certId);
-  el.innerHTML = glossaryHistory.map(h => {
-    const c = CERTS.find(cc => cc.id === h.certId);
-    const saved = getVocabNotes().some(n => n.term === h.term && n.certId === h.certId);
-    return `
-      <div class="history-item">
-        <button class="history-term" onclick="fillAndAsk('${h.certId}','${h.certName}','${h.term}')">${h.term}</button>
-        <span class="history-cert" style="color:${c?.color}">${c?.icon} ${c?.name}</span>
-        ${saved ? '<span class="history-saved">💾 保存済み</span>' : ''}
-      </div>
-    `;
-  }).join('');
+  // Refresh saved vocab panel
+  renderSavedVocabHistory(certId, certName);
 }
 
 // ─────────────────────────────────────
@@ -736,10 +864,11 @@ function renderHistory() {
 // ─────────────────────────────────────
 
 const BLOCK_META = {
-  '一言で言うと':   { icon: '💡', color: '#48cfad' },
-  'もう少し詳しく': { icon: '📖', color: '#6c63ff' },
+  '一言で言うと':     { icon: '💡', color: '#48cfad' },
+  'もう少し詳しく':   { icon: '📖', color: '#6c63ff' },
+  '具体例で理解する': { icon: '🔍', color: '#6c63ff' },
   '試験ではこう出る': { icon: '📝', color: '#f7b731' },
-  '覚え方のコツ':   { icon: '🧠', color: '#fc5c65' },
+  '覚え方のコツ':     { icon: '🧠', color: '#fc5c65' },
 };
 
 function formatGeminiText(text) {
@@ -782,5 +911,14 @@ function switchTab(btn, tabId) {
 // Init
 // ─────────────────────────────────────
 
-updateHeaderProfile();
-renderCertCards();
+// Expose functions so app.js (ES module) can access and wrap them
+window.renderCertCards     = renderCertCards;
+window.updateHeaderProfile = updateHeaderProfile;
+window.saveProfile         = saveProfile;
+window.saveVocabNote       = saveVocabNote;
+window.deleteVocabNote     = deleteVocabNote;
+window.clearAllVocab       = clearAllVocab;
+window.renderVocabList     = renderVocabList;
+window.openProfile         = openProfile;
+
+// Do NOT auto-init here — app.js calls these after Firebase auth resolves

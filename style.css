@@ -648,8 +648,24 @@ header h1 {
 
 .history-term:hover { color: var(--accent2); }
 
-.history-cert { font-size: 0.7rem; }
+.history-cert  { font-size: 0.7rem; }
 .history-saved { font-size: 0.68rem; color: var(--accent2); }
+
+.btn-delete-vocab {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-sub) !important;
+  font-size: 0.75rem !important;
+  padding: 5px 12px !important;
+  border-radius: 7px !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delete-vocab:hover {
+  border-color: var(--accent4) !important;
+  color: var(--accent4) !important;
+  background: rgba(252,92,101,0.08) !important;
+}
 
 .glossary-error { color: var(--accent4); font-size: 0.83rem; line-height: 1.65; }
 
@@ -839,6 +855,29 @@ header h1 {
 .vocab-term { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
 .vocab-explanation { font-size: 0.76rem; color: var(--text-sub); line-height: 1.5; }
 
+.vocab-toggle-icon {
+  font-size: 0.65rem;
+  color: var(--text-sub);
+  margin-left: auto;
+  margin-right: 4px;
+  transition: transform 0.2s;
+}
+
+.vocab-detail .gloss-block {
+  margin-bottom: 8px;
+}
+
+.vocab-detail .gloss-block-header {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+}
+
+.vocab-detail .gloss-block-body {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  line-height: 1.6;
+}
+
 .btn-clear-vocab {
   background: none;
   border: 1px solid var(--border);
@@ -854,6 +893,112 @@ header h1 {
 
 /* ── Misc ── */
 .empty-msg { color: var(--text-sub); font-size: 0.82rem; padding: 8px 0; }
+
+/* ── Login Screen ── */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, #1a1d40 0%, #0f1117 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 48px 40px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(108,99,255,0.1);
+  animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+.login-logo {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 20px rgba(108,99,255,0.5));
+}
+
+.login-card h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #fff 40%, var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-card > p {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.btn-google-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #3c4043;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  font-family: inherit;
+}
+
+.btn-google-login:hover {
+  background: #f8f9fa;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-google-login:active { transform: translateY(0); }
+
+.btn-google-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-note {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 18px;
+  line-height: 1.6;
+  opacity: 0.7;
+}
+
+/* ── Logout button ── */
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-logout:hover {
+  border-color: var(--accent4);
+  color: var(--accent4);
+  background: rgba(252,92,101,0.07);
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {

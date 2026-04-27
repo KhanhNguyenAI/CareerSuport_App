@@ -8,7 +8,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp }
                                    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-const app  = initializeApp(FIREBASE_CONFIG);
+const config = window.FIREBASE_CONFIG || FIREBASE_CONFIG;
+const app  = initializeApp(config);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -48,14 +49,17 @@ async function ensureUserDoc(user) {
   const snap = await getDoc(ref);
   if (!snap.exists()) {
     await setDoc(ref, {
-      uid:       user.uid,
-      email:     user.email,
-      photoURL:  user.photoURL,
-      createdAt: serverTimestamp(),
-      profile:   { name: user.displayName || "", age: "", status: "", goal: "" },
-      examDates: {},
-      vocabNotes: []
+      uid:        user.uid,
+      email:      user.email,
+      photoURL:   user.photoURL,
+      createdAt:  serverTimestamp(),
+      profile:    { name: user.displayName || "", age: "", status: "", goal: "" },
+      examDates:  {},
+      vocabNotes: [],
     });
+  } else {
+    // Keep email/photoURL synced in case Google profile changes
+    await updateDoc(ref, { photoURL: user.photoURL, email: user.email });
   }
 }
 
@@ -113,4 +117,38 @@ export async function clearVocabNotes() {
   const user = currentUser();
   if (!user) return;
   await updateDoc(userRef(user.uid), { vocabNotes: [] });
+}
+
+// ─────────────────────────────────────
+// Firestore: Global Vocab Cache
+// Shared across ALL users — saves Gemini API cost
+// Collection: globalVocab / doc: "{certId}:{term}"
+// ─────────────────────────────────────
+
+function globalVocabRef(certId, term) {
+  // Normalize: lowercase, trim — so "API" and "api" hit the same doc
+  const key = `${certId}:${term.trim().toLowerCase()}`;
+  return doc(db, 'globalVocab', key);
+}
+
+export async function getGlobalVocab(certId, term) {
+  try {
+    const snap = await getDoc(globalVocabRef(certId, term));
+    return snap.exists() ? snap.data() : null;
+  } catch {
+    return null; // Fail silently — just fall back to AI
+  }
+}
+
+export async function saveGlobalVocab(certId, term, explanation) {
+  try {
+    await setDoc(globalVocabRef(certId, term), {
+      certId,
+      term,
+      explanation,
+      cachedAt: serverTimestamp(),
+    }, { merge: true });
+  } catch (e) {
+    console.warn('globalVocab save failed:', e);
+  }
 }
