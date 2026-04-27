@@ -549,7 +549,16 @@ function restartInterview() {
 // Init
 // ─────────────────────────────────────
 
-window.switchMainTab   = switchMainTab;
+function switchMainTabWithInit(tabId) {
+  switchMainTab(tabId);
+  if (tabId === 'tab-interview2' && window.initInterview2) {
+    // Only init once (if wrap is empty)
+    const wrap = document.getElementById('interview2-wrap');
+    if (wrap && !wrap.innerHTML.trim()) window.initInterview2();
+  }
+}
+
+window.switchMainTab   = switchMainTabWithInit;
 window.setStudentType  = setStudentType;
 window.renderQuestion  = renderQuestion;
 window.useTemplate     = useTemplate;

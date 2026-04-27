@@ -51,7 +51,10 @@
           📄 書類準備
         </button>
         <button class="main-tab-btn" data-tab="tab-interview" onclick="switchMainTab('tab-interview')">
-          🎤 一次面接シミュレーター
+          🎤 一次面接
+        </button>
+        <button class="main-tab-btn" data-tab="tab-interview2" onclick="switchMainTab('tab-interview2')">
+          🎙️ 二次面接
         </button>
       </div>
 
@@ -131,11 +134,17 @@
 
       </div>
 
+      <!-- ── Tab: 二次面接 ── -->
+      <div class="main-tab-content" id="tab-interview2">
+        <div id="interview2-wrap"></div>
+      </div>
+
     </div>
   </div>
 
   <script src="firebase-config.js"></script>
   <script src="interview.js"></script>
+  <script src="interview2.js"></script>
   <script type="module" src="interview-app.js"></script>
 </body>
 </html>
