@@ -151,9 +151,9 @@ function renderSPI() {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
           ${[
-            ['SPI3問題集（リクルート公式）', '公式問題集で本番形式に慣れる', 'https://www.recruit.co.jp/employment/aboutspi/', var(--accent2)],
-            ['SPIノートの会 - 問題集', '言語・非言語の頻出問題を網羅', 'https://www.spinote.jp/', var(--accent)],
-            ['就活の教科書 - SPI対策', 'テーマ別に分かりやすく解説', 'https://reashu.com/spi/', var(--accent3)],
+            ['SPI3問題集（リクルート公式）', '公式問題集で本番形式に慣れる', 'https://www.recruit.co.jp/employment/aboutspi/', 'var(--accent2)'],
+            ['SPIノートの会 - 問題集', '言語・非言語の頻出問題を網羅', 'https://www.spinote.jp/', 'var(--accent)'],
+            ['就活の教科書 - SPI対策', 'テーマ別に分かりやすく解説', 'https://reashu.com/spi/', 'var(--accent3)'],
           ].map(([name, desc, url, c]) => `
             <a href="${url}" target="_blank" rel="noopener" class="exam-link-card" style="--lc:${c}">
               <div>
