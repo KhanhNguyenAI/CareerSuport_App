@@ -6,6 +6,34 @@
 const GEMINI_API_KEY2 = 'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw';
 const GEMINI_URL2 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY2}`;
 
+async function geminiRequest2(prompt, maxTokens = 2048, retries = 3, delayMs = 2000) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(GEMINI_URL2, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
+        })
+      });
+      if (res.status === 429 || res.status === 503 || res.status === 502 || res.status === 500) {
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+          continue;
+        }
+        throw new Error(res.status === 429 ? 'RATE_LIMIT' : 'SERVER_ERROR');
+      }
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } catch (e) {
+      if (attempt === retries) throw e;
+      await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+}
+
 // ── State ──
 let esContent      = '';          // ES text uploaded by user
 let i2Questions    = [];          // AI-generated questions
@@ -265,17 +293,7 @@ ${esContent}
 各質問は自然な日本語で、面接官らしい丁寧な口調で書いてください。`.trim();
 
   try {
-    const res = await fetch(GEMINI_URL2, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-      })
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const json = await res.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = await geminiRequest2(prompt, 1024);
 
     // Parse questions
     i2Questions = [];
@@ -296,9 +314,14 @@ ${esContent}
     btn.disabled = false;
     btn.innerHTML = '✨ ESを分析して質問を生成する';
     const wrap = document.getElementById('interview2-wrap');
+    const msg = e.message === 'RATE_LIMIT'
+      ? '⚠️ リクエストが集中しています。少し待ってから再試行してください。'
+      : e.message === 'SERVER_ERROR'
+      ? '⚠️ AIサーバーが混雑しています。しばらく待ってから再試行してください。'
+      : `⚠️ エラー: ${e.message}`;
     const errDiv = document.createElement('div');
-    errDiv.style.cssText = 'color:var(--accent4);font-size:0.83rem;margin-top:12px;padding:12px 16px;background:rgba(252,92,101,0.08);border-radius:8px';
-    errDiv.textContent = '⚠️ エラー: ' + e.message;
+    errDiv.style.cssText = 'color:var(--accent4);font-size:0.83rem;margin-top:12px;padding:12px 16px;background:rgba(252,92,101,0.08);border-radius:8px;display:flex;align-items:center;gap:12px';
+    errDiv.innerHTML = `<span>${msg}</span><button onclick="analyzeES()" style="background:var(--accent4);border:none;border-radius:8px;color:#fff;font-size:0.78rem;padding:6px 14px;cursor:pointer;font-family:inherit;flex-shrink:0">再試行</button>`;
     wrap.appendChild(errDiv);
   }
 }
@@ -580,17 +603,7 @@ ESの内容と照らし合わせて評価できる点を2〜3つ。
 ESの内容を活かした、より良い回答例（200字程度）。`.trim();
 
   try {
-    const res = await fetch(GEMINI_URL2, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-      })
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const json = await res.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = await geminiRequest2(prompt, 2048);
 
     const feedback = parseI2Feedback(text);
     i2Answers[i2Index] = { answer, feedback };
@@ -598,8 +611,16 @@ ESの内容を活かした、より良い回答例（200字程度）。`.trim();
     document.getElementById('i2-nav').style.display = 'flex';
 
   } catch (e) {
-    document.getElementById('i2-feedback-area').innerHTML =
-      `<div style="color:var(--accent4);padding:16px">⚠️ エラー: ${e.message}</div>`;
+    const msg = e.message === 'RATE_LIMIT'
+      ? 'リクエストが集中しています。少し待ってから再試行してください。'
+      : e.message === 'SERVER_ERROR'
+      ? 'AIサーバーが混雑しています。しばらく待ってから再試行してください。'
+      : e.message;
+    document.getElementById('i2-feedback-area').innerHTML = `
+      <div style="color:var(--accent4);padding:16px 20px;background:rgba(252,92,101,0.08);border-radius:12px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:0.85rem">⚠️ ${msg}</span>
+        <button onclick="evaluateI2Answer()" style="background:var(--accent4);border:none;border-radius:8px;color:#fff;font-size:0.78rem;padding:6px 14px;cursor:pointer;font-family:inherit;flex-shrink:0">再試行</button>
+      </div>`;
   } finally {
     btn.disabled = false;
     btn.textContent = '✨ AIに評価してもらう';

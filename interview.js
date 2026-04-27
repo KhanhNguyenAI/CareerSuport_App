@@ -5,6 +5,34 @@
 const GEMINI_API_KEY = 'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+async function geminiRequest(prompt, maxTokens = 2048, retries = 3, delayMs = 2000) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
+        })
+      });
+      if (res.status === 429 || res.status === 503 || res.status === 502 || res.status === 500) {
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+          continue;
+        }
+        throw new Error(res.status === 429 ? 'RATE_LIMIT' : 'SERVER_ERROR');
+      }
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } catch (e) {
+      if (attempt === retries) throw e;
+      await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+}
+
 // ─────────────────────────────────────
 // Question Bank
 // ─────────────────────────────────────
@@ -337,17 +365,7 @@ ${answer}
 上記のアドバイスを反映した、より良い回答例を書いてください（200字程度）。`.trim();
 
   try {
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-      })
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const json = await res.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = await geminiRequest(prompt, 2048);
 
     const feedback = parseFeedback(text);
     sessionAnswers[qId] = { answer, feedback };
@@ -356,7 +374,16 @@ ${answer}
     document.getElementById('nav-area').style.display = 'flex';
 
   } catch (e) {
-    fbArea.innerHTML = `<div class="feedback-card" style="padding:20px 22px;color:var(--accent4)">⚠️ エラーが発生しました: ${e.message}</div>`;
+    const msg = e.message === 'RATE_LIMIT'
+      ? '⏳ リクエスト制限です。1分ほど待ってから再試行してください。'
+      : e.message === 'SERVER_ERROR'
+      ? '🔄 AIサーバーが混雑しています。しばらく待ってから再試行してください。'
+      : `⚠️ エラー: ${e.message}`;
+    fbArea.innerHTML = `
+      <div class="feedback-card" style="padding:20px 22px;color:var(--accent4)">
+        ${msg}<br><br>
+        <button class="btn-next" onclick="evaluateAnswer('${q.id}')" style="margin-top:4px">🔄 再試行する</button>
+      </div>`;
   } finally {
     btn.disabled = false;
     btn.textContent = '✨ AIに評価してもらう';
