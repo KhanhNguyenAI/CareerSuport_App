@@ -3,7 +3,7 @@
 // ES upload → AI generates questions → Voice interview → AI evaluation
 // ─────────────────────────────────────
 
-const GEMINI_API_KEY2 = 'AIzaSyC8pLmEurPIjYYDIJm2vYgsNITN4XwRKNg';
+const GEMINI_API_KEY2 = 'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw';
 const GEMINI_URL2 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY2}`;
 
 // ── State ──
