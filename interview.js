@@ -581,6 +581,19 @@ window.switchMainTab = function(tabId) {
     const wrap = document.getElementById('interview2-wrap');
     if (wrap && !wrap.innerHTML.trim()) window.initInterview2();
   }
+  // Lazy init SPI / WebCAB / 筆記試験
+  if (tabId === 'tab-spi' && window.renderSPI) {
+    const el = document.getElementById('tab-spi');
+    if (el && !el.innerHTML.trim()) window.renderSPI();
+  }
+  if (tabId === 'tab-webcab' && window.renderWebCAB) {
+    const el = document.getElementById('tab-webcab');
+    if (el && !el.innerHTML.trim()) window.renderWebCAB();
+  }
+  if (tabId === 'tab-kakishiken' && window.renderKakiShiken) {
+    const el = document.getElementById('tab-kakishiken');
+    if (el && !el.innerHTML.trim()) window.renderKakiShiken();
+  }
 };
 window.setStudentType  = setStudentType;
 window.renderQuestion  = renderQuestion;

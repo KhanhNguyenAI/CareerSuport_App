@@ -56,6 +56,15 @@
         <button class="main-tab-btn" data-tab="tab-interview2" onclick="switchMainTab('tab-interview2')">
           🎙️ 二次面接
         </button>
+        <button class="main-tab-btn" data-tab="tab-spi" onclick="switchMainTab('tab-spi')">
+          📊 SPI対策
+        </button>
+        <button class="main-tab-btn" data-tab="tab-webcab" onclick="switchMainTab('tab-webcab')">
+          🌐 WebCAB
+        </button>
+        <button class="main-tab-btn" data-tab="tab-kakishiken" onclick="switchMainTab('tab-kakishiken')">
+          ✍️ 筆記試験
+        </button>
       </div>
 
       <!-- ── Tab: 書類準備 ── -->
@@ -139,6 +148,15 @@
         <div id="interview2-wrap"></div>
       </div>
 
+      <!-- ── Tab: SPI対策 ── -->
+      <div class="main-tab-content" id="tab-spi"></div>
+
+      <!-- ── Tab: WebCAB ── -->
+      <div class="main-tab-content" id="tab-webcab"></div>
+
+      <!-- ── Tab: 筆記試験 ── -->
+      <div class="main-tab-content" id="tab-kakishiken"></div>
+
     </div>
   </div>
 
@@ -146,6 +164,7 @@
   <script src="firebase-config.js"></script>
   <script src="interview.js"></script>
   <script src="interview2.js"></script>
+  <script src="exam.js"></script>
   <script type="module" src="interview-app.js"></script>
 </body>
 </html>
