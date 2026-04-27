@@ -137,15 +137,8 @@ function getProfile() {
 }
 
 // ─────────────────────────────────────
-// Tab switcher (main tabs)
+// Tab switcher (main tabs) — defined on window below
 // ─────────────────────────────────────
-
-function switchMainTab(tabId) {
-  document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-  document.getElementById(tabId).classList.add('active');
-}
 
 // ─────────────────────────────────────
 // Student type toggle
@@ -549,16 +542,19 @@ function restartInterview() {
 // Init
 // ─────────────────────────────────────
 
-function switchMainTabWithInit(tabId) {
-  switchMainTab(tabId);
+window.switchMainTab = function(tabId) {
+  // Base tab switch
+  document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+
+  // Lazy init 二次面接
   if (tabId === 'tab-interview2' && window.initInterview2) {
-    // Only init once (if wrap is empty)
     const wrap = document.getElementById('interview2-wrap');
     if (wrap && !wrap.innerHTML.trim()) window.initInterview2();
   }
-}
-
-window.switchMainTab   = switchMainTabWithInit;
+};
 window.setStudentType  = setStudentType;
 window.renderQuestion  = renderQuestion;
 window.useTemplate     = useTemplate;
