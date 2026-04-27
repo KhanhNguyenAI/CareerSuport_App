@@ -555,25 +555,42 @@ function startListening() {
 
   recognition.onerror = (e) => {
     const status = document.getElementById('voice-status');
-    if (e.error === 'no-speech') {
-      // no-speech is normal — just keep listening
+    // These are non-fatal — onend will restart automatically
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    // Network error: retry automatically after short delay
+    if (e.error === 'network') {
+      if (status) status.textContent = '🔄 ネットワークエラー。再接続中...';
+      return; // onend will fire and restart
+    }
+    // not-allowed = mic permission denied
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      isListening = false;
+      if (status) status.textContent = '🚫 マイクのアクセスが拒否されました。ブラウザの設定で許可してください。';
+      const btn = document.getElementById('btn-voice');
+      if (btn) {
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color       = 'var(--text)';
+        btn.innerHTML = '🎤 マイクで回答する';
+      }
       return;
     }
-    if (e.error === 'aborted') return;
-    if (status) status.textContent = `⚠️ エラー: ${e.error}`;
-    isListening = false;
-    const btn = document.getElementById('btn-voice');
-    if (btn) {
-      btn.style.borderColor = 'var(--border)';
-      btn.style.color       = 'var(--text)';
-      btn.innerHTML = '🎤 マイクで回答する';
-    }
+    // Other errors: show message but keep isListening so onend restarts
+    if (status) status.textContent = `⚠️ エラー: ${e.error} — 再接続中...`;
   };
 
   recognition.onend = () => {
-    // Chrome stops recognition on silence even with continuous:true — restart it
+    // Restart if user hasn't pressed stop (handles silence cutoff + network errors)
     if (isListening) {
-      try { recognition.start(); } catch (err) { /* already started */ }
+      const status = document.getElementById('voice-status');
+      setTimeout(() => {
+        if (!isListening) return;
+        try {
+          recognition.start();
+          if (status && status.textContent.includes('再接続')) {
+            status.textContent = '🔴 録音中... 話してください';
+          }
+        } catch (err) { /* already running */ }
+      }, 300);
     }
   };
 
