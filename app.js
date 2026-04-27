@@ -13,6 +13,8 @@ import {
   addVocabNote,
   removeVocabNote,
   clearVocabNotes,
+  addManualNote,
+  removeManualNote,
   getGlobalVocab,
   saveGlobalVocab,
 } from './auth.js';
@@ -52,6 +54,11 @@ onAuthChange(async (firebaseUser) => {
       }
       if (userData.vocabNotes) {
         localStorage.setItem('vocab_notes', JSON.stringify(userData.vocabNotes));
+        // also merge into user_profile so note-panel.js can read it
+        const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
+        pr.vocabNotes   = userData.vocabNotes;
+        pr.manualNotes  = userData.manualNotes || [];
+        localStorage.setItem('user_profile', JSON.stringify(pr));
       }
     }
 
@@ -61,6 +68,7 @@ onAuthChange(async (firebaseUser) => {
     // Initialize UI
     if (window.renderCertCards)     window.renderCertCards();
     if (window.updateHeaderProfile) window.updateHeaderProfile();
+    npShowFloat();
 
   } else {
     // Not logged in
@@ -68,6 +76,8 @@ onAuthChange(async (firebaseUser) => {
     localStorage.removeItem('vocab_notes');
     loginScreen.style.display = 'flex';
     appScreen.style.display   = 'none';
+    const fb = document.getElementById('np-float-btn');
+    if (fb) fb.style.display = 'none';
   }
 });
 
@@ -175,6 +185,17 @@ window.saveVocabNote = async (certId, term, explanation) => {
   if (!user) return;
   try {
     await addVocabNote(certId, term, explanation);
+    // Also update user_profile.vocabNotes for note-panel
+    const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
+    const exists = (pr.vocabNotes||[]).some(n => n.certId===certId && n.term===term);
+    if (!exists) {
+      pr.vocabNotes = [...(pr.vocabNotes||[]), { certId, term, explanation, savedAt: new Date().toISOString() }];
+      localStorage.setItem('user_profile', JSON.stringify(pr));
+    }
+    if (window.npShowFloat) window.npShowFloat();
+    if (window.npRenderList && document.getElementById('note-panel')?.classList.contains('np-open')) {
+      window.npRenderList();
+    }
   } catch (e) {
     console.error('Firestore addVocabNote error:', e);
   }
@@ -201,5 +222,53 @@ window.handleClearAllVocab = async () => {
     await clearVocabNotes();
   } catch (e) {
     console.error('Firestore clearVocabNotes error:', e);
+  }
+};
+
+// ─────────────────────────────────────
+// Manual Notes (note panel)
+// ─────────────────────────────────────
+
+function npShowFloat() {
+  const btn = document.getElementById('np-float-btn');
+  if (!btn) return;
+  btn.style.display = 'flex';
+  const pr    = JSON.parse(localStorage.getItem('user_profile') || '{}');
+  const total = ((pr.vocabNotes||[]).length + (pr.manualNotes||[]).length);
+  const badge = document.getElementById('np-float-badge');
+  if (badge) {
+    badge.textContent = total > 0 ? total : '';
+    badge.style.display = total > 0 ? 'flex' : 'none';
+  }
+}
+window.npShowFloat = npShowFloat;
+
+window.saveManualNote = async (title, content, color) => {
+  const note = {
+    id:       Date.now().toString(),
+    title:    title.trim(),
+    content:  content.trim(),
+    color:    color || '#6c63ff',
+    savedAt:  new Date().toISOString(),
+  };
+  // localStorage
+  const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
+  pr.manualNotes = [...(pr.manualNotes || []), note];
+  localStorage.setItem('user_profile', JSON.stringify(pr));
+  // Firestore
+  const user = currentUser();
+  if (user) {
+    try { await addManualNote(note); } catch (e) { console.error(e); }
+  }
+  return note;
+};
+
+window.deleteManualNote = async (noteId) => {
+  const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
+  pr.manualNotes = (pr.manualNotes || []).filter(n => n.id !== noteId);
+  localStorage.setItem('user_profile', JSON.stringify(pr));
+  const user = currentUser();
+  if (user) {
+    try { await removeManualNote(noteId); } catch (e) { console.error(e); }
   }
 };

@@ -109,9 +109,22 @@
 
   </div>
 
+  <!-- ── Floating Note Button ── -->
+  <button id="np-float-btn" class="np-float-btn" onclick="npToggle()" title="マイノート" style="display:none">
+    📝
+    <span id="np-float-badge" class="np-float-badge" style="display:none">0</span>
+  </button>
+
+  <!-- ── Note Panel ── -->
+  <div id="note-panel" class="np-panel"></div>
+
+  <!-- ── Overlay ── -->
+  <div id="np-overlay" class="np-overlay" onclick="npClose()"></div>
+
   <!-- Firebase config must be loaded first -->
   <script src="firebase-config.js"></script>
   <script src="script.js"></script>
+  <script src="note-panel.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

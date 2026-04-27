@@ -5,7 +5,7 @@
 import { initializeApp }          from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
                                    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp }
                                    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const config = window.FIREBASE_CONFIG || FIREBASE_CONFIG;
@@ -117,6 +117,26 @@ export async function clearVocabNotes() {
   const user = currentUser();
   if (!user) return;
   await updateDoc(userRef(user.uid), { vocabNotes: [] });
+}
+
+// ─────────────────────────────────────
+// Firestore: Manual Notes (free-form user notes)
+// ─────────────────────────────────────
+
+export async function addManualNote(noteData) {
+  const user = currentUser();
+  if (!user) return;
+  await updateDoc(userRef(user.uid), {
+    manualNotes: arrayUnion(noteData)
+  });
+}
+
+export async function removeManualNote(noteId) {
+  const user = currentUser();
+  if (!user) return;
+  const data = await loadUserData();
+  const updated = (data?.manualNotes || []).filter(n => n.id !== noteId);
+  await updateDoc(userRef(user.uid), { manualNotes: updated });
 }
 
 // ─────────────────────────────────────
