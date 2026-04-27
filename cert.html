@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT資格対策 | IT学習コーチ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">🎓</div>
+      <h2>IT学習コーチ</h2>
+      <p>Googleアカウントでログインして学習記録を保存しましょう</p>
+      <button class="btn-google-login" id="btn-login">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Googleでログイン
+      </button>
+      <p class="login-note">ログインすることで学習進捗・保存した用語がクラウドに同期されます</p>
+    </div>
+  </div>
+
+  <!-- Main App (hidden until login) -->
+  <div id="app" style="display:none">
+
+    <header>
+      <div class="logo">🎓</div>
+      <h1>IT資格対策</h1>
+      <div class="header-actions">
+        <button class="btn-profile" id="btn-open-profile" onclick="openProfile()">
+          <img id="header-avatar-img" src="" alt="" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover">
+          <span id="header-avatar-emoji">👤</span>
+          <span id="header-name">プロフィール</span>
+        </button>
+        <a href="index.html" class="back-btn">← ホームへ</a>
+        <button class="btn-logout" id="btn-logout">ログアウト</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <p class="section-title">取得したい資格を選択してください</p>
+      <div class="cert-grid" id="cert-grid"></div>
+      <div id="detail-panel"></div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profile-modal" onclick="closeProfileOutside(event)">
+      <div class="modal">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <img id="modal-avatar" src="" alt="" style="width:32px;height:32px;border-radius:50%;display:none">
+            <h3>👤 プロフィール</h3>
+          </div>
+          <button class="modal-close" onclick="closeProfile()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="profile-section">
+            <div class="profile-section-title">基本情報</div>
+            <div class="form-row">
+              <label>お名前 <span class="required">*</span></label>
+              <input type="text" id="p-name" placeholder="例：田中 太郎" maxlength="30">
+            </div>
+            <div class="form-row-2col">
+              <div class="form-row">
+                <label>年齢</label>
+                <input type="number" id="p-age" placeholder="例：21" min="10" max="80">
+              </div>
+              <div class="form-row">
+                <label>現在の状況</label>
+                <select id="p-status">
+                  <option value="">選択</option>
+                  <option value="大学生">大学生</option>
+                  <option value="専門学生">専門学生</option>
+                  <option value="社会人">社会人</option>
+                  <option value="求職中">求職中</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>学習目標・目的</label>
+              <textarea id="p-goal" placeholder="例：就活のためにITパスポートを取得したい" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <div class="profile-section-title">受験予定日</div>
+            <div class="exam-dates-grid" id="exam-dates-grid"></div>
+          </div>
+
+          <div class="profile-section" id="vocab-section">
+            <div class="profile-section-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>📚 保存した用語</span>
+              <button class="btn-clear-vocab" onclick="handleClearAllVocab()">すべて削除</button>
+            </div>
+            <div id="vocab-list"><p class="empty-msg">まだ保存した用語はありません。</p></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-save-profile" onclick="handleSaveProfile()">💾 保存する</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase config must be loaded first -->
+  <script src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

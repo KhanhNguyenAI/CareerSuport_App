@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>就職活動対策 | IT学習コーチ</title>
+  <style>
+    :root {
+      --bg: #0a0c14;
+      --surface: #111420;
+      --surface2: #1a1e30;
+      --border: #252a42;
+      --color: #48cfad;
+      --text: #e8eaf6;
+      --text-sub: #7880a0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      gap: 32px;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px; left: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-decoration: none;
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      transition: all 0.2s;
+    }
+    .back-btn:hover { color: var(--text); border-color: var(--color); }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: rgba(72,207,173,0.1);
+      border: 1px solid rgba(72,207,173,0.25);
+      color: var(--color);
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 40%, #48cfad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    .sub {
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      text-align: center;
+      max-width: 440px;
+      line-height: 1.65;
+    }
+
+    .coming-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .coming-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .coming-card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .coming-card p {
+      font-size: 0.83rem;
+      color: var(--text-sub);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.83rem;
+    }
+
+    .feature-item .fi-icon {
+      font-size: 1.2rem;
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .feature-item div strong {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 2px;
+    }
+
+    .feature-item div span {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
+
+    .progress-bar-wrap {
+      margin-top: 28px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 35%;
+      background: linear-gradient(90deg, var(--color), #6c63ff);
+      border-radius: 8px;
+      animation: pulse-width 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-width {
+      from { width: 30%; }
+      to   { width: 42%; }
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back-btn">← ホームへ戻る</a>
+
+  <span class="badge">🚧 Coming Soon — Part 2</span>
+
+  <h1>就職活動対策</h1>
+
+  <p class="sub">IT新卒向けの面接シミュレーター。Gemini AIとリアルタイム対話で本番の面接に備えます。</p>
+
+  <div class="coming-card">
+    <div class="coming-icon">🎤</div>
+    <h2>開発中の機能</h2>
+    <p>以下の機能を現在開発中です。もうしばらくお待ちください。</p>
+
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="fi-icon">1️⃣</span>
+        <div>
+          <strong>書類・一次面接シミュレーター</strong>
+          <span>自己紹介・志望動機・強み弱みをAIが評価</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="fi-icon">2️⃣</span>
+        <div>
+          <strong>人事面接トレーニング</strong>
+          <span>STAR法・キャリアプラン・企業研究の練習</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="fi-icon">3️⃣</span>
+        <div>
+          <strong>技術面接シミュレーター</strong>
+          <span>IT基礎知識・開発経験・コーディング問題</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="fi-icon">🎤</span>
+        <div>
+          <strong>音声対話モード</strong>
+          <span>Gemini AI + Text-to-Speech でリアルな練習</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="fi-icon">💡</span>
+        <div>
+          <strong>回答フィードバック</strong>
+          <span>AIが内容・構成・表現を採点してアドバイス</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill"></div>
+    </div>
+    <div class="progress-label">
+      <span>開発進捗</span>
+      <span>〜35%</span>
+    </div>
+  </div>
+
+</body>
+</html>
