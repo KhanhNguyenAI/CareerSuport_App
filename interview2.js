@@ -72,9 +72,9 @@ function renderStep1() {
             <div style="font-size:0.85rem;font-weight:600;color:var(--text);margin-bottom:4px">
               クリックまたはドラッグ＆ドロップ
             </div>
-            <div style="font-size:0.75rem">.txt ファイル対応</div>
+            <div style="font-size:0.75rem">.pdf / .txt 対応</div>
           </div>
-          <input type="file" id="es-file-input" accept=".txt" style="display:none" onchange="handleFileSelect(event)">
+          <input type="file" id="es-file-input" accept=".pdf,.txt" style="display:none" onchange="handleFileSelect(event)">
 
           <!-- Divider -->
           <div style="display:flex;align-items:center;gap:10px;color:var(--text-sub);font-size:0.75rem">
@@ -153,19 +153,70 @@ function handleFileSelect(e) {
   if (file) readFile(file);
 }
 
-function readFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target.result;
+async function readFile(file) {
+  const dropZone = document.getElementById('drop-zone');
+  dropZone.innerHTML = `
+    <div class="spinner" style="margin:0 auto 8px"></div>
+    <div style="font-size:0.82rem;color:var(--text-sub)">読み込み中...</div>
+  `;
+
+  try {
+    let text = '';
+
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      text = await readPDF(file);
+    } else {
+      text = await readText(file);
+    }
+
     document.getElementById('es-paste-input').value = text;
     onEsPasteInput();
-    document.getElementById('drop-zone').innerHTML = `
+    dropZone.innerHTML = `
       <div style="font-size:1.8rem;margin-bottom:6px">✅</div>
       <div style="font-size:0.85rem;font-weight:600;color:var(--accent)">${file.name}</div>
       <div style="font-size:0.72rem;color:var(--text-sub);margin-top:4px">${text.length}文字読み込みました</div>
     `;
-  };
-  reader.readAsText(file, 'UTF-8');
+  } catch (e) {
+    dropZone.innerHTML = `
+      <div style="font-size:1.8rem;margin-bottom:6px">❌</div>
+      <div style="font-size:0.82rem;color:var(--accent4)">読み込みエラー: ${e.message}</div>
+      <div style="font-size:0.72rem;color:var(--text-sub);margin-top:4px">クリックして再試行</div>
+    `;
+    dropZone.onclick = () => document.getElementById('es-file-input').click();
+  }
+}
+
+function readText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+async function readPDF(file) {
+  // Load PDF.js from CDN dynamically
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf         = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page    = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(item => item.str).join(' ');
+    fullText += pageText + '\n';
+  }
+
+  if (!fullText.trim()) {
+    throw new Error('PDFからテキストを抽出できませんでした（スキャン画像のPDFは非対応です）');
+  }
+
+  return fullText.trim();
 }
 
 // ─────────────────────────────────────
