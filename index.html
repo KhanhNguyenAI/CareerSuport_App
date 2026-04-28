@@ -104,6 +104,47 @@
 
     </main>
 
+    <!-- Feedback Section -->
+    <section class="feedback-section">
+      <div class="feedback-intro">
+        <div class="feedback-badge">💬 フィードバック</div>
+        <h3>ご意見・ご要望をお聞かせください</h3>
+        <p>バグ報告・機能提案・感想など、何でもお気軽にどうぞ</p>
+      </div>
+
+      <div class="feedback-card">
+        <!-- Type selector -->
+        <div class="fb-type-row">
+          <button class="fb-type-btn active" data-type="バグ報告"  onclick="fbSelect(this)">🐛 バグ報告</button>
+          <button class="fb-type-btn"        data-type="機能提案"  onclick="fbSelect(this)">💡 機能提案</button>
+          <button class="fb-type-btn"        data-type="感想"      onclick="fbSelect(this)">💬 感想</button>
+          <button class="fb-type-btn"        data-type="その他"    onclick="fbSelect(this)">📝 その他</button>
+        </div>
+
+        <!-- Message -->
+        <textarea
+          id="fb-msg"
+          class="fb-textarea"
+          placeholder="フィードバックを入力してください..."
+          oninput="fbUpdateBtn()"
+          rows="4"
+        ></textarea>
+
+        <!-- Footer -->
+        <div class="fb-footer">
+          <span class="fb-note">📧 g025c1120@g.neec.ac.jp に送信されます</span>
+          <button id="fb-submit" class="fb-submit-btn" onclick="fbSubmit()" disabled>
+            送信する →
+          </button>
+        </div>
+
+        <!-- Success banner (hidden by default) -->
+        <div id="fb-success" class="fb-success" style="display:none">
+          ✅ メールアプリが開きます。送信ボタンを押して完了してください。
+        </div>
+      </div>
+    </section>
+
     <!-- Footer stats -->
     <footer class="stats-row">
       <div class="stat">
@@ -129,5 +170,30 @@
 
   </div>
 
+  <script>
+    let _fbType = 'バグ報告';
+
+    function fbSelect(el) {
+      document.querySelectorAll('.fb-type-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      _fbType = el.dataset.type;
+    }
+
+    function fbUpdateBtn() {
+      const val = document.getElementById('fb-msg').value.trim();
+      const btn = document.getElementById('fb-submit');
+      btn.disabled = !val;
+    }
+
+    function fbSubmit() {
+      const msg = document.getElementById('fb-msg').value.trim();
+      if (!msg) return;
+      const subject = encodeURIComponent('[IT学習コーチ] ' + _fbType);
+      const body    = encodeURIComponent('種類: ' + _fbType + '\n\n' + msg);
+      window.location.href = 'mailto:g025c1120@g.neec.ac.jp?subject=' + subject + '&body=' + body;
+      document.getElementById('fb-success').style.display = 'block';
+      setTimeout(() => { document.getElementById('fb-success').style.display = 'none'; }, 5000);
+    }
+  </script>
 </body>
 </html>
