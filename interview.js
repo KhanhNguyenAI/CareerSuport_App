@@ -569,6 +569,11 @@ window.switchMainTab = function(tabId) {
     const el = document.getElementById('tab-kakishiken');
     if (el && !el.innerHTML.trim()) window.renderKakiShiken();
   }
+  // Lazy init 企業研究
+  if (tabId === 'tab-company' && window.initCompanySearch) {
+    const el = document.getElementById('tab-company');
+    if (el && !el.innerHTML.trim()) window.initCompanySearch();
+  }
 };
 window.setStudentType  = setStudentType;
 window.renderQuestion  = renderQuestion;
