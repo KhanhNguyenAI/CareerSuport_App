@@ -132,7 +132,7 @@
 
         <!-- Footer -->
         <div class="fb-footer">
-          <span class="fb-note">📧 g025c1120@g.neec.ac.jp に送信されます</span>
+          <span class="fb-note">📧 9.7nguyenvantuankhanh@gmail.com に送信されます</span>
           <button id="fb-submit" class="fb-submit-btn" onclick="fbSubmit()" disabled>
             送信する →
           </button>
@@ -190,7 +190,7 @@
       if (!msg) return;
       const subject = encodeURIComponent('[IT学習コーチ] ' + _fbType);
       const body    = encodeURIComponent('種類: ' + _fbType + '\n\n' + msg);
-      window.location.href = 'mailto:g025c1120@g.neec.ac.jp?subject=' + subject + '&body=' + body;
+      window.location.href = 'mailto:9.7nguyenvantuankhanh@gmail.com?subject=' + subject + '&body=' + body;
       document.getElementById('fb-success').style.display = 'block';
       setTimeout(() => { document.getElementById('fb-success').style.display = 'none'; }, 5000);
     }
