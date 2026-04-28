@@ -112,6 +112,26 @@
 
   </div>
 
+  <!-- ── Floating E-words Search Button ── -->
+  <div id="ew-search-wrap" class="ew-search-wrap" style="display:none">
+    <!-- Search popup (appears above button) -->
+    <div id="ew-popup" class="ew-popup" style="display:none">
+      <div class="ew-popup-label">🔍 e-words.jp で検索</div>
+      <div class="ew-popup-row">
+        <input id="ew-input" class="ew-input" type="text"
+          placeholder="例：クラウド、API、AI..."
+          onkeydown="if(event.key==='Enter')ewSearch()"
+          oninput="ewUpdateBtn()"
+          autocomplete="off"
+        >
+        <button id="ew-go-btn" class="ew-go-btn" onclick="ewSearch()" disabled title="検索">→</button>
+      </div>
+      <div class="ew-popup-tip">Enterキーまたは → で検索</div>
+    </div>
+    <!-- Float button -->
+    <button class="ew-float-btn" onclick="ewToggle()" title="IT用語を検索 (e-words.jp)">🔍</button>
+  </div>
+
   <!-- ── Floating Note Button ── -->
   <button id="np-float-btn" class="np-float-btn" onclick="npToggle()" title="マイノート" style="display:none">
     📝
@@ -131,5 +151,48 @@
   <script src="script.js"></script>
   <script src="note-panel.js"></script>
   <script type="module" src="app.js"></script>
+  <script>
+    // ── E-words floating search ──
+    function ewToggle() {
+      const popup = document.getElementById('ew-popup');
+      const isOpen = popup.style.display !== 'none';
+      popup.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) {
+        setTimeout(() => document.getElementById('ew-input')?.focus(), 80);
+      }
+    }
+    function ewUpdateBtn() {
+      const val = document.getElementById('ew-input').value.trim();
+      document.getElementById('ew-go-btn').disabled = !val;
+    }
+    function ewSearch() {
+      const kw = document.getElementById('ew-input').value.trim();
+      if (!kw) return;
+      window.open('https://e-words.jp/search.php?q=' + encodeURIComponent(kw), '_blank', 'noopener');
+      document.getElementById('ew-popup').style.display = 'none';
+      document.getElementById('ew-input').value = '';
+      ewUpdateBtn();
+    }
+    // Show ew button whenever note button shows
+    const _origNpShowFloat = window.npShowFloat;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mirror visibility of np-float-btn
+      const npBtn = document.getElementById('np-float-btn');
+      const ewWrap = document.getElementById('ew-search-wrap');
+      if (npBtn && ewWrap) {
+        new MutationObserver(() => {
+          ewWrap.style.display = npBtn.style.display;
+        }).observe(npBtn, { attributes: true, attributeFilter: ['style'] });
+      }
+    });
+    // Close popup when clicking outside
+    document.addEventListener('click', e => {
+      const wrap = document.getElementById('ew-search-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const p = document.getElementById('ew-popup');
+        if (p) p.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>

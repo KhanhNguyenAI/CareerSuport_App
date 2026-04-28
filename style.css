@@ -1300,6 +1300,107 @@ header h1 {
    Floating Note Panel
    ════════════════════════════════════ */
 
+/* ── E-words floating search ── */
+.ew-search-wrap {
+  position: fixed;
+  bottom: 96px;   /* just above the 📝 note button (28px + 54px + 14px gap) */
+  right: 28px;
+  z-index: 9001;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.ew-float-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--surface, #1a1d27);
+  border: 1.5px solid rgba(72,207,173,0.45);
+  color: #48cfad;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(72,207,173,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.ew-float-btn:hover {
+  transform: scale(1.1);
+  background: rgba(72,207,173,0.12);
+  box-shadow: 0 6px 24px rgba(72,207,173,0.45);
+}
+
+/* Search popup */
+.ew-popup {
+  background: var(--surface, #1a1d27);
+  border: 1px solid rgba(72,207,173,0.35);
+  border-radius: 14px;
+  padding: 14px 16px;
+  width: 270px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  animation: ewFadeUp 0.18s ease;
+}
+
+@keyframes ewFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ew-popup-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #48cfad;
+  margin-bottom: 10px;
+}
+
+.ew-popup-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ew-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(72,207,173,0.3);
+  border-radius: 8px;
+  color: var(--text, #e8eaf6);
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ew-input:focus { border-color: #48cfad; }
+.ew-input::placeholder { color: rgba(136,146,176,0.5); }
+
+.ew-go-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #48cfad;
+  border: none;
+  color: #0f1117;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.ew-go-btn:hover:not(:disabled) { opacity: 0.85; }
+.ew-go-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ew-popup-tip {
+  font-size: 0.68rem;
+  color: rgba(136,146,176,0.6);
+  margin-top: 8px;
+  text-align: right;
+}
+
 /* Float button */
 .np-float-btn {
   position: fixed;
