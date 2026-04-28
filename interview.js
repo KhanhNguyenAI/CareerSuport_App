@@ -242,7 +242,7 @@ function renderQuestion() {
     <div id="feedback-area"></div>
 
     <!-- Nav -->
-    <div class="interview-nav" id="nav-area" style="display:none">
+    <div class="interview-nav" id="nav-area" style="display:flex">
       ${currentIndex > 0 ? `<button class="btn-next" onclick="prevQuestion()">← 前の質問</button>` : ''}
       <button class="btn-next primary" onclick="nextQuestion()">
         ${currentIndex < total - 1 ? '次の質問 →' : '🎉 完了'}
