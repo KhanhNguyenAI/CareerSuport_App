@@ -5,31 +5,7 @@
 // API key + model resolved dynamically from gemini-config.js (supports user override)
 
 async function geminiRequest(prompt, maxTokens = 2048, retries = 3, delayMs = 2000) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(window.getGeminiURL(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
-        })
-      });
-      if (res.status === 429 || res.status === 503 || res.status === 502 || res.status === 500) {
-        if (attempt < retries) {
-          await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
-          continue;
-        }
-        throw new Error(res.status === 429 ? 'RATE_LIMIT' : 'SERVER_ERROR');
-      }
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const json = await res.json();
-      return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    } catch (e) {
-      if (attempt === retries) throw e;
-      await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
-    }
-  }
+  return window.callAI(prompt, maxTokens, retries, delayMs);
 }
 
 // ─────────────────────────────────────

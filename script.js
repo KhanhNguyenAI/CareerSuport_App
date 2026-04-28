@@ -147,29 +147,10 @@ async function askGemini(prompt, cacheKey = null, retries = 2, delayMs = 2000, m
   const cached = getCached(key);
   if (cached) return cached;
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(window.getGeminiURL(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
-      })
-    });
-    if (res.status === 429) {
-      if (attempt < retries) { await new Promise(r => setTimeout(r, delayMs * (attempt + 1))); continue; }
-      throw new Error('RATE_LIMIT');
-    }
-    if (res.status === 503 || res.status === 502 || res.status === 500) {
-      if (attempt < retries) { await new Promise(r => setTimeout(r, delayMs * (attempt + 1))); continue; }
-      throw new Error('SERVER_ERROR');
-    }
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const json = await res.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '回答を取得できませんでした。';
-    setCache(key, text);
-    return text;
-  }
+  // Use unified callAI (handles Gemini / OpenAI / DeepSeek)
+  const text = await window.callAI(prompt, maxTokens, retries, delayMs);
+  setCache(key, text);
+  return text;
 }
 
 // ─────────────────────────────────────
