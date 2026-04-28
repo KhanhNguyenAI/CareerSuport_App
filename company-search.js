@@ -195,11 +195,16 @@ async function csCallWithGrounding(prompt, retries = 3) {
         throw new Error(res.status === 429 ? 'RATE_LIMIT' : 'SERVER_ERROR');
       }
       if (!res.ok) {
-        // Grounding might not be supported with this key — fall back to regular
+        // Grounding not supported / key issue — fall back to regular callAI
         return window.callAI(prompt, 4000, retries, 2000);
       }
       const json = await res.json();
-      return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      // Join all text parts (grounding may split answer across multiple parts)
+      const parts = json.candidates?.[0]?.content?.parts || [];
+      const text  = parts.map(p => p.text || '').join('').trim();
+      // If grounding returned empty (tool-call only, no final text), fall back
+      if (!text) return window.callAI(prompt, 4000, retries, 2000);
+      return text;
     } catch (e) {
       if (attempt === retries) throw e;
       await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
@@ -360,10 +365,10 @@ function renderCSResult(name, text, today) {
                   onmouseover="this.style.borderColor='${s.color}';this.style.color='${s.color}'"
                   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'"
                 >📋</button>
-                <span class="cs-chevron" id="cs-chevron-${s.key}" style="color:var(--text-sub);font-size:0.7rem;transition:transform 0.2s">▼</span>
+                <span class="cs-chevron" id="cs-chevron-${s.key}" style="color:var(--text-sub);font-size:0.7rem;transition:transform 0.2s;transform:rotate(180deg)">▼</span>
               </div>
             </div>
-            <div class="cs-card-body" id="cs-body-${s.key}">
+            <div class="cs-card-body cs-body-open" id="cs-body-${s.key}">
               <div class="cs-card-content" id="cs-content-${s.key}">
                 ${content
                   ? content.split('\n').filter(l => l.trim())
@@ -386,8 +391,6 @@ function renderCSResult(name, text, today) {
   window._csRawText = text;
   window._csCompanyName = name;
 
-  // Expand all sections after render
-  setTimeout(() => csExpandAll(), 80);
   resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
