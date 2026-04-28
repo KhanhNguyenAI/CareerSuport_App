@@ -2,8 +2,7 @@
 // Config
 // ─────────────────────────────────────
 
-const GEMINI_API_KEY = 'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+// API key + model resolved dynamically from gemini-config.js (supports user override)
 
 const CACHE_VERSION = 'v6';
 const GEMINI_CACHE_KEY = 'gemini_cache';
@@ -149,7 +148,7 @@ async function askGemini(prompt, cacheKey = null, retries = 2, delayMs = 2000, m
   if (cached) return cached;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(GEMINI_URL, {
+    const res = await fetch(window.getGeminiURL(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -35,6 +35,9 @@
           <span id="header-avatar-emoji">👤</span>
           <span id="header-name">プロフィール</span>
         </button>
+        <button class="btn-ai-settings" onclick="gcOpenSettings()" title="AI設定">
+          <span id="gc-header-badge">⚙️</span>
+        </button>
         <a href="index.html" class="back-btn">← ホームへ</a>
         <button class="btn-logout" id="btn-logout">ログアウト</button>
       </div>
@@ -123,6 +126,7 @@
 
   <!-- Firebase config must be loaded first -->
   <script src="firebase-config.js"></script>
+  <script src="gemini-config.js"></script>
   <script src="script.js"></script>
   <script src="note-panel.js"></script>
   <script type="module" src="app.js"></script>

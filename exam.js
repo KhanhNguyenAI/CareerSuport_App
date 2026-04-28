@@ -2,13 +2,12 @@
 // exam.js  —  SPI / WebCAB / 筆記試験対策
 // ─────────────────────────────────────
 
-const GEMINI_EXAM_KEY = 'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw';
-const GEMINI_EXAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_EXAM_KEY}`;
+// API key + model resolved dynamically from gemini-config.js (supports user override)
 
 async function geminiExam(prompt, maxTokens = 2048, retries = 3, delayMs = 2000) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(GEMINI_EXAM_URL, {
+      const res = await fetch(window.getGeminiURL(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -183,6 +183,24 @@ header h1 {
 }
 .btn-logout:hover { border-color: var(--accent4); color: var(--accent4); }
 
+/* AI Settings button (shared with cert.html via gemini-config.js) */
+.btn-ai-settings {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-ai-settings:hover {
+  border-color: var(--accent2);
+  color: var(--accent2);
+  background: rgba(108,99,255,0.07);
+}
+
 /* ── Container ── */
 .container {
   max-width: 900px;
