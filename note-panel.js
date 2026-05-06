@@ -236,7 +236,13 @@ function npRenderList() {
           ${expanded ? `
             <div class="np-card-body">
               <div class="np-card-content">${(n.explanation||'').replace(/\n/g,'<br>')}</div>
-              <div class="np-card-date">${n.savedAt ? new Date(n.savedAt).toLocaleDateString('ja-JP') : ''}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:6px">
+                <div class="np-card-date">${n.savedAt ? new Date(n.savedAt).toLocaleDateString('ja-JP') : ''}</div>
+                <button onclick="event.stopPropagation();npAddToFlashcard(${JSON.stringify(n.term)},${JSON.stringify(n.certId)})"
+                  style="background:linear-gradient(135deg,#e879f9,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.72rem;font-weight:700;padding:5px 11px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex-shrink:0">
+                  🃏 フラッシュカードに追加
+                </button>
+              </div>
             </div>
           ` : ''}
         </div>
@@ -292,6 +298,68 @@ function npRenderList() {
   });
 }
 
+// ── Flashcard integration ──
+
+function npAddToFlashcard(term, certId) {
+  const profile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+  const note = (profile.vocabNotes || []).find(n => n.term === term && n.certId === certId);
+  if (!note || !note.explanation) {
+    alert('用語の説明が見つかりませんでした。');
+    return;
+  }
+
+  // Extract [一言で言うと] section
+  const match = note.explanation.match(/\[一言で言うと\]([\s\S]*?)(?=\[|$)/);
+  let oneLiner = match ? match[1].trim() : '';
+
+  // Fallback: strip all section headers and take first 200 chars
+  if (!oneLiner) {
+    oneLiner = note.explanation.replace(/\[.*?\]/g, '').trim().slice(0, 200);
+  }
+
+  if (!oneLiner) {
+    alert('説明が見つかりませんでした。先に用語を検索してノートを保存してください。');
+    return;
+  }
+
+  if (window.fcAddCustomCard) {
+    window.fcAddCustomCard(term, oneLiner);
+  } else {
+    // Fallback: write directly to localStorage if flashcard.js not loaded
+    const cards = JSON.parse(localStorage.getItem('fc_custom_cards') || '[]');
+    const idx = cards.findIndex(c => c.term === term);
+    if (idx !== -1) {
+      cards[idx].def = oneLiner;
+    } else {
+      cards.push({ term, def: oneLiner, addedAt: new Date().toISOString() });
+    }
+    localStorage.setItem('fc_custom_cards', JSON.stringify(cards));
+  }
+
+  npShowToast(`「${term}」をフラッシュカードに追加しました 🃏`);
+}
+
+function npShowToast(msg) {
+  let toast = document.getElementById('np-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'np-toast';
+    toast.style.cssText = [
+      'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+      'background:#1a1a2e', 'border:1px solid #e879f9', 'border-radius:10px',
+      'color:#fff', 'font-size:0.82rem', 'font-weight:600',
+      'padding:10px 18px', 'z-index:99999',
+      'box-shadow:0 4px 20px rgba(0,0,0,0.4)',
+      'transition:opacity 0.4s', 'white-space:nowrap', 'pointer-events:none'
+    ].join(';');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+}
+
 // ── Expose to window ──
 
 window.npToggle       = npToggle;
@@ -303,4 +371,5 @@ window.npToggleAdd    = npToggleAdd;
 window.npSubmitAdd    = npSubmitAdd;
 window.npDeleteVocab  = npDeleteVocab;
 window.npDeleteManual = npDeleteManual;
-window.npRenderList   = npRenderList;   // called after vocab note saved
+window.npRenderList      = npRenderList;   // called after vocab note saved
+window.npAddToFlashcard  = npAddToFlashcard;

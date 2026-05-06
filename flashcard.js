@@ -86,6 +86,31 @@ const FC_DECKS = {
   }
 };
 
+// ── Custom deck ──
+const FC_CUSTOM_KEY  = 'fc_custom_cards';
+const FC_CUSTOM_DECK = { name: 'カスタム', icon: '✏️', color: '#e879f9' };
+
+function fcLoadCustom() {
+  return JSON.parse(localStorage.getItem(FC_CUSTOM_KEY) || '[]');
+}
+function fcSaveCustom(cards) {
+  localStorage.setItem(FC_CUSTOM_KEY, JSON.stringify(cards));
+}
+
+window.fcAddCustomCard = function (term, def) {
+  const cards = fcLoadCustom();
+  const idx = cards.findIndex(c => c.term === term);
+  if (idx !== -1) {
+    cards[idx].def = def;
+  } else {
+    cards.push({ term, def, addedAt: new Date().toISOString() });
+  }
+  fcSaveCustom(cards);
+  // Refresh count badge if deck selector is visible
+  const btn = document.getElementById('fc-deck-custom');
+  if (btn) { const s = btn.querySelector('span'); if (s) s.textContent = fcLoadCustom().length + '枚'; }
+};
+
 // ── State ──
 let fcDeckKey  = 'it-passport';
 let fcCards    = [];
@@ -119,6 +144,11 @@ function renderFCPage() {
               <span style="font-size:0.65rem;opacity:0.7;margin-left:4px">${d.cards.length}枚</span>
             </button>
           `).join('')}
+          <button onclick="fcSelectDeck('custom')" id="fc-deck-custom" class="fc-deck-btn ${'custom' === fcDeckKey ? 'fc-deck-active' : ''}"
+            style="--dc:#e879f9">
+            ✏️ カスタム
+            <span style="font-size:0.65rem;opacity:0.7;margin-left:4px">${fcLoadCustom().length}枚</span>
+          </button>
         </div>
       </div>
 
@@ -144,6 +174,14 @@ window.fcSelectDeck = function (key, resetProgress = true) {
   document.querySelectorAll('.fc-deck-btn').forEach(b => b.classList.remove('fc-deck-active'));
   document.getElementById(`fc-deck-${key}`)?.classList.add('fc-deck-active');
 
+  if (key === 'custom') {
+    fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
+    if (resetProgress) { fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; }
+    fcFlipped = false;
+    renderFCCustom();
+    return;
+  }
+
   fcCards = [...FC_DECKS[key].cards].sort(() => Math.random() - 0.5);
   if (resetProgress) { fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; }
   fcFlipped = false;
@@ -152,7 +190,11 @@ window.fcSelectDeck = function (key, resetProgress = true) {
 
 window.fcRestart = function () {
   fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; fcFlipped = false;
-  fcCards = [...fcCards].sort(() => Math.random() - 0.5);
+  if (fcDeckKey === 'custom') {
+    fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
+  } else {
+    fcCards = [...fcCards].sort(() => Math.random() - 0.5);
+  }
   document.getElementById('fc-stats').style.display = 'none';
   renderFCCard();
 };
@@ -180,6 +222,10 @@ function renderFCCard() {
           <button onclick="fcShowOnly('dontknow')" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.88rem;font-weight:600;padding:11px 24px;cursor:pointer;font-family:inherit">
             ❌ 知らない単語だけ
           </button>
+          ${fcDeckKey === 'custom' ? `
+          <button onclick="renderFCCustom()" style="background:var(--surface2);border:1px solid #e879f9;border-radius:10px;color:#e879f9;font-size:0.88rem;font-weight:600;padding:11px 24px;cursor:pointer;font-family:inherit">
+            📋 カードを管理
+          </button>` : ''}
         </div>
       </div>`;
     if (statsBar) {
@@ -191,7 +237,7 @@ function renderFCCard() {
   }
 
   const card  = fcCards[fcIndex];
-  const deck  = FC_DECKS[fcDeckKey];
+  const deck  = FC_DECKS[fcDeckKey] || FC_CUSTOM_DECK;
   const total = fcCards.length;
 
   area.innerHTML = `
@@ -274,6 +320,101 @@ window.fcShowOnly = function (filter) {
   // Re-run with only "don't know" cards (stored in session)
   // Simple: just restart with current cards
   fcRestart();
+};
+
+// ── Custom deck management ──
+
+function renderFCCustom() {
+  const area     = document.getElementById('fc-card-area');
+  const statsBar = document.getElementById('fc-stats');
+  if (!area) return;
+  if (statsBar) statsBar.style.display = 'none';
+
+  const cards = fcLoadCustom();
+
+  area.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:#e879f9;text-transform:uppercase;margin-bottom:4px">✏️ カスタムカード</div>
+          <div style="font-size:0.78rem;color:var(--text-sub)">${cards.length}枚 — 自由に追加・削除できます</div>
+        </div>
+        ${cards.length > 0 ? `
+          <button onclick="fcStartCustomQuiz()"
+            style="background:linear-gradient(135deg,#e879f9,#6c63ff);border:none;border-radius:10px;color:#fff;font-size:0.85rem;font-weight:700;padding:10px 18px;cursor:pointer;font-family:inherit">
+            ▶ 練習を開始 (${cards.length}枚)
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Add card form -->
+      <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--text-sub);margin-bottom:10px;letter-spacing:0.5px">＋ カードを手動追加</div>
+        <input id="fc-new-term" type="text" placeholder="用語・単語（表面）" maxlength="80"
+          style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:8px;outline:none;display:block"
+          onkeydown="if(event.key==='Enter')document.getElementById('fc-new-def').focus()">
+        <textarea id="fc-new-def" rows="2" placeholder="説明・定義（裏面）" maxlength="300"
+          style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:8px;outline:none;resize:vertical;display:block"></textarea>
+        <button onclick="fcSubmitCustomCard()"
+          style="background:var(--accent,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;padding:8px 18px;cursor:pointer;font-family:inherit">
+          追加する ＋
+        </button>
+      </div>
+
+      <!-- Card list -->
+      ${cards.length === 0 ? `
+        <div style="text-align:center;padding:24px 16px;color:var(--text-sub)">
+          <div style="font-size:2.5rem;margin-bottom:10px">🃏</div>
+          <div style="font-size:0.82rem;line-height:1.7">カードがまだありません。<br>上のフォームから追加するか、<br>AI用語ノートの <strong>「フラッシュカードに追加」</strong> から自動追加できます。</div>
+        </div>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${cards.map(c => `
+            <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.88rem;font-weight:700;margin-bottom:3px;color:var(--text)">${c.term}</div>
+                <div style="font-size:0.75rem;color:var(--text-sub);line-height:1.5">${c.def}</div>
+              </div>
+              <button onclick="fcDeleteCustomCard(${JSON.stringify(c.term)})"
+                style="flex-shrink:0;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
+                onmouseover="this.style.color='#fc5c65';this.style.borderColor='#fc5c65'"
+                onmouseout="this.style.color='';this.style.borderColor=''"
+                title="削除">🗑️</button>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+window.fcSubmitCustomCard = function () {
+  const termEl = document.getElementById('fc-new-term');
+  const defEl  = document.getElementById('fc-new-def');
+  const term = termEl?.value.trim();
+  const def  = defEl?.value.trim();
+  if (!term) { termEl?.focus(); return; }
+  if (!def)  { defEl?.focus(); return; }
+  window.fcAddCustomCard(term, def);
+  renderFCCustom();
+};
+
+window.fcDeleteCustomCard = function (term) {
+  if (!confirm(`「${term}」を削除しますか？`)) return;
+  fcSaveCustom(fcLoadCustom().filter(c => c.term !== term));
+  renderFCCustom();
+  const btn = document.getElementById('fc-deck-custom');
+  if (btn) { const s = btn.querySelector('span'); if (s) s.textContent = fcLoadCustom().length + '枚'; }
+};
+
+window.fcStartCustomQuiz = function () {
+  const cards = fcLoadCustom();
+  if (cards.length === 0) return;
+  fcCards = [...cards].sort(() => Math.random() - 0.5);
+  fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; fcFlipped = false;
+  renderFCCard();
 };
 
 // Tab switcher for cert page
