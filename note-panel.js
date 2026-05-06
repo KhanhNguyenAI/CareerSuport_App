@@ -238,7 +238,8 @@ function npRenderList() {
               <div class="np-card-content">${(n.explanation||'').replace(/\n/g,'<br>')}</div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:6px">
                 <div class="np-card-date">${n.savedAt ? new Date(n.savedAt).toLocaleDateString('ja-JP') : ''}</div>
-                <button onclick="event.stopPropagation();npAddToFlashcard(${JSON.stringify(n.term)},${JSON.stringify(n.certId)})"
+                <button data-term="${n.term.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" data-cert="${n.certId}"
+                  onclick="event.stopPropagation();npAddToFlashcard(this.dataset.term,this.dataset.cert)"
                   style="background:linear-gradient(135deg,#e879f9,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.72rem;font-weight:700;padding:5px 11px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex-shrink:0">
                   🃏 フラッシュカードに追加
                 </button>

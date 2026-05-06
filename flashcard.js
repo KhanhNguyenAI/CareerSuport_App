@@ -91,7 +91,9 @@ const FC_CUSTOM_KEY  = 'fc_custom_cards';
 const FC_CUSTOM_DECK = { name: 'カスタム', icon: '✏️', color: '#e879f9' };
 
 function fcLoadCustom() {
-  return JSON.parse(localStorage.getItem(FC_CUSTOM_KEY) || '[]');
+  try {
+    return JSON.parse(localStorage.getItem(FC_CUSTOM_KEY) || '[]');
+  } catch { return []; }
 }
 function fcSaveCustom(cards) {
   localStorage.setItem(FC_CUSTOM_KEY, JSON.stringify(cards));
@@ -261,7 +263,7 @@ function renderFCCard() {
           <div class="fc-card-front" style="--dc:${deck.color}">
             <div class="fc-card-deck-label">${deck.icon} ${deck.name}</div>
             <div class="fc-term">${card.term}</div>
-            <div class="fc-reading">${card.reading}</div>
+            <div class="fc-reading">${card.reading || ''}</div>
             <div class="fc-flip-hint">タップして答えを見る 👆</div>
           </div>
 
@@ -377,7 +379,7 @@ function renderFCCustom() {
                 <div style="font-size:0.88rem;font-weight:700;margin-bottom:3px;color:var(--text)">${c.term}</div>
                 <div style="font-size:0.75rem;color:var(--text-sub);line-height:1.5">${c.def}</div>
               </div>
-              <button onclick="fcDeleteCustomCard(${JSON.stringify(c.term)})"
+              <button data-term="${c.term.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="fcDeleteCustomCard(this.dataset.term)"
                 style="flex-shrink:0;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
                 onmouseover="this.style.color='#fc5c65';this.style.borderColor='#fc5c65'"
                 onmouseout="this.style.color='';this.style.borderColor=''"
