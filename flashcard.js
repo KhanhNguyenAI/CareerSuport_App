@@ -114,7 +114,7 @@ window.fcAddCustomCard = function (term, def) {
 };
 
 // ── State ──
-let fcDeckKey  = 'it-passport';
+let fcDeckKey  = 'custom';
 let fcCards    = [];
 let fcIndex    = 0;
 let fcFlipped  = false;
@@ -132,28 +132,6 @@ function renderFCPage() {
 
   wrap.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:20px">
-
-      <!-- Deck selector -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px">
-        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:12px">
-          🎓 資格を選ぶ
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap" id="fc-deck-btns">
-          ${Object.entries(FC_DECKS).map(([key, d]) => `
-            <button onclick="fcSelectDeck('${key}')" id="fc-deck-${key}" class="fc-deck-btn ${key === fcDeckKey ? 'fc-deck-active' : ''}"
-              style="--dc:${d.color}">
-              ${d.icon} ${d.name}
-              <span style="font-size:0.65rem;opacity:0.7;margin-left:4px">${d.cards.length}枚</span>
-            </button>
-          `).join('')}
-          <button onclick="fcSelectDeck('custom')" id="fc-deck-custom" class="fc-deck-btn ${'custom' === fcDeckKey ? 'fc-deck-active' : ''}"
-            style="--dc:#e879f9">
-            ✏️ カスタム
-            <span style="font-size:0.65rem;opacity:0.7;margin-left:4px">${fcLoadCustom().length}枚</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Card area -->
       <div id="fc-card-area"></div>
 
@@ -164,40 +142,25 @@ function renderFCPage() {
         <span style="font-size:0.85rem;font-weight:700;color:#fc5c65">❌ 知らない：<span id="fc-dontknow-count">0</span></span>
         <button onclick="fcRestart()" style="margin-left:auto;font-size:0.78rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-sub);padding:6px 14px;cursor:pointer;font-family:inherit">🔄 もう一度</button>
       </div>
-
     </div>
   `;
 
-  fcSelectDeck(fcDeckKey, false);
+  renderFCCustom();
 }
 
 window.fcSelectDeck = function (key, resetProgress = true) {
-  fcDeckKey = key;
-  document.querySelectorAll('.fc-deck-btn').forEach(b => b.classList.remove('fc-deck-active'));
-  document.getElementById(`fc-deck-${key}`)?.classList.add('fc-deck-active');
-
-  if (key === 'custom') {
-    fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
-    if (resetProgress) { fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; }
-    fcFlipped = false;
-    renderFCCustom();
-    return;
-  }
-
-  fcCards = [...FC_DECKS[key].cards].sort(() => Math.random() - 0.5);
+  fcDeckKey = 'custom';
+  fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
   if (resetProgress) { fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; }
   fcFlipped = false;
-  renderFCCard();
+  renderFCCustom();
 };
 
 window.fcRestart = function () {
   fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; fcFlipped = false;
-  if (fcDeckKey === 'custom') {
-    fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
-  } else {
-    fcCards = [...fcCards].sort(() => Math.random() - 0.5);
-  }
-  document.getElementById('fc-stats').style.display = 'none';
+  fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
+  const statsBar = document.getElementById('fc-stats');
+  if (statsBar) statsBar.style.display = 'none';
   renderFCCard();
 };
 
