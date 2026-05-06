@@ -49,13 +49,17 @@ async function ensureUserDoc(user) {
   const snap = await getDoc(ref);
   if (!snap.exists()) {
     await setDoc(ref, {
-      uid:        user.uid,
-      email:      user.email,
-      photoURL:   user.photoURL,
-      createdAt:  serverTimestamp(),
-      profile:    { name: user.displayName || "", age: "", status: "", goal: "" },
-      examDates:  {},
-      vocabNotes: [],
+      uid:         user.uid,
+      email:       user.email,
+      photoURL:    user.photoURL,
+      createdAt:   serverTimestamp(),
+      profile:     { name: user.displayName || "", age: "", status: "", goal: "" },
+      examDates:   {},
+      vocabNotes:  [],
+      manualNotes: [],
+      customCards: [],
+      cardGroups:  [],
+      schedule:    [],
     });
   } else {
     // Keep email/photoURL synced in case Google profile changes
@@ -158,6 +162,32 @@ export async function getGlobalVocab(certId, term) {
   } catch {
     return null; // Fail silently — just fall back to AI
   }
+}
+
+// ─────────────────────────────────────
+// Firestore: Custom Flashcards & Groups
+// ─────────────────────────────────────
+
+export async function saveCustomCards(cards) {
+  const user = currentUser();
+  if (!user) return;
+  await updateDoc(userRef(user.uid), { customCards: cards, updatedAt: serverTimestamp() });
+}
+
+export async function saveCardGroups(groups) {
+  const user = currentUser();
+  if (!user) return;
+  await updateDoc(userRef(user.uid), { cardGroups: groups, updatedAt: serverTimestamp() });
+}
+
+// ─────────────────────────────────────
+// Firestore: Interview Schedule
+// ─────────────────────────────────────
+
+export async function saveScheduleEntries(entries) {
+  const user = currentUser();
+  if (!user) return;
+  await updateDoc(userRef(user.uid), { schedule: entries, updatedAt: serverTimestamp() });
 }
 
 export async function saveGlobalVocab(certId, term, explanation) {

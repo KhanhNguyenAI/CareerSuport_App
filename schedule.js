@@ -20,6 +20,7 @@ function scLoad() {
 }
 function scSave(entries) {
   localStorage.setItem(SC_KEY, JSON.stringify(entries));
+  if (window.saveScheduleEntries) window.saveScheduleEntries(entries).catch(e => console.warn('Schedule sync:', e));
 }
 function scSortEntries(entries) {
   return entries.sort((a, b) => {

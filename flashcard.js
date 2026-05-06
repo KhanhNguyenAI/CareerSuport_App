@@ -97,6 +97,7 @@ function fcLoadCustom() {
 }
 function fcSaveCustom(cards) {
   localStorage.setItem(FC_CUSTOM_KEY, JSON.stringify(cards));
+  if (window.saveCustomCards) window.saveCustomCards(cards).catch(e => console.warn('FC cards sync:', e));
 }
 
 window.fcAddCustomCard = function (term, def, groupId) {
@@ -295,7 +296,10 @@ const FC_GRP_COLORS = ['#6c63ff','#48cfad','#f7b731','#fc5c65','#4a90d9','#e879f
 function fcLoadGroups() {
   try { return JSON.parse(localStorage.getItem(FC_GROUPS_KEY) || '[]'); } catch { return []; }
 }
-function fcSaveGroups(g) { localStorage.setItem(FC_GROUPS_KEY, JSON.stringify(g)); }
+function fcSaveGroups(g) {
+  localStorage.setItem(FC_GROUPS_KEY, JSON.stringify(g));
+  if (window.saveCardGroups) window.saveCardGroups(g).catch(e => console.warn('FC groups sync:', e));
+}
 
 // ── Custom deck management ──
 

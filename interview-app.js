@@ -3,7 +3,11 @@ import {
   logout,
   onAuthChange,
   loadUserData,
+  saveScheduleEntries,
 } from './auth.js';
+
+// Expose so schedule.js (non-module) can call it
+window.saveScheduleEntries = saveScheduleEntries;
 
 const loginScreen = document.getElementById('login-screen');
 const appScreen   = document.getElementById('app');
@@ -23,6 +27,16 @@ onAuthChange(async (user) => {
         ...data.profile,
         examDates: data.examDates || {},
       }));
+    }
+
+    // ── Sync interview schedule ──
+    const fsSchedule    = data?.schedule || [];
+    const localSchedule = JSON.parse(localStorage.getItem('interview_schedule') || '[]');
+    if (fsSchedule.length > 0) {
+      localStorage.setItem('interview_schedule', JSON.stringify(fsSchedule));
+    } else if (localSchedule.length > 0) {
+      // Migrate existing local data up to Firestore
+      saveScheduleEntries(localSchedule).catch(() => {});
     }
 
     // Update header avatar

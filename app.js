@@ -17,11 +17,17 @@ import {
   removeManualNote,
   getGlobalVocab,
   saveGlobalVocab,
+  saveCustomCards,
+  saveCardGroups,
 } from './auth.js';
 
 // Expose global vocab helpers so script.js (non-module) can call them
 window.getGlobalVocab  = getGlobalVocab;
 window.saveGlobalVocab = saveGlobalVocab;
+
+// Expose flashcard sync so flashcard.js (non-module) can call them
+window.saveCustomCards = saveCustomCards;
+window.saveCardGroups  = saveCardGroups;
 
 // ─────────────────────────────────────
 // DOM refs
@@ -59,6 +65,23 @@ onAuthChange(async (firebaseUser) => {
         pr.vocabNotes   = userData.vocabNotes;
         pr.manualNotes  = userData.manualNotes || [];
         localStorage.setItem('user_profile', JSON.stringify(pr));
+      }
+
+      // ── Sync custom flashcards & groups ──
+      const fsCards  = userData.customCards || [];
+      const fsGroups = userData.cardGroups  || [];
+      const localCards  = JSON.parse(localStorage.getItem('fc_custom_cards') || '[]');
+      const localGroups = JSON.parse(localStorage.getItem('fc_groups')        || '[]');
+      if (fsCards.length > 0) {
+        localStorage.setItem('fc_custom_cards', JSON.stringify(fsCards));
+      } else if (localCards.length > 0) {
+        // Migrate existing local data up to Firestore
+        saveCustomCards(localCards).catch(() => {});
+      }
+      if (fsGroups.length > 0) {
+        localStorage.setItem('fc_groups', JSON.stringify(fsGroups));
+      } else if (localGroups.length > 0) {
+        saveCardGroups(localGroups).catch(() => {});
       }
     }
 
