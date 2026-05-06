@@ -1810,3 +1810,201 @@ header h1 {
   font-size: 0.85rem;
   line-height: 1.7;
 }
+
+/* ════════════════════════════════════
+   🌙 LIGHT MODE — data-theme="light"
+   ════════════════════════════════════ */
+html[data-theme="light"] {
+  --bg: #f0f2fa;
+  --surface: #ffffff;
+  --surface2: #eef0fa;
+  --border: #d5d9ee;
+  --text: #1a1d2e;
+  --text-sub: #5a6280;
+}
+
+html[data-theme="light"] body { background: var(--bg); }
+
+html[data-theme="light"] header {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+html[data-theme="light"] .login-screen {
+  background: radial-gradient(ellipse at 50% 0%, #e8eaff 0%, #f0f2fa 70%);
+}
+
+html[data-theme="light"] .login-card {
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(108,99,255,0.12);
+}
+
+html[data-theme="light"] .gc-overlay { background: rgba(0,0,0,0.35); }
+
+html[data-theme="light"] .gc-modal,
+html[data-theme="light"] .np-panel { background: #fff; }
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-sub);
+  font-size: 1rem;
+  width: 36px; height: 36px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ════════════════════════════════════
+   🃏 FLASHCARD — cert page tabs
+   ════════════════════════════════════ */
+
+.cert-main-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.cert-tab-btn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+
+.cert-tab-btn:hover { color: var(--text); }
+.cert-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.cert-tab-pane { animation: fadeUp 0.25s ease; }
+
+/* Deck selector buttons */
+.fc-deck-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fc-deck-btn:hover     { border-color: var(--dc, var(--accent)); color: var(--dc, var(--accent)); }
+.fc-deck-btn.fc-deck-active {
+  background: color-mix(in srgb, var(--dc, var(--accent)) 12%, transparent);
+  border-color: var(--dc, var(--accent));
+  color: var(--dc, var(--accent));
+}
+
+/* Card wrapper with 3-D flip */
+.fc-card-wrap {
+  perspective: 1200px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fc-card {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fc-card-flipped { transform: rotateY(180deg); }
+
+.fc-card-front,
+.fc-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 24px;
+  gap: 12px;
+  text-align: center;
+  min-height: 240px;
+}
+
+.fc-card-front {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  border-top: 3px solid var(--dc, var(--accent));
+}
+
+.fc-card-back {
+  background: color-mix(in srgb, var(--dc, var(--accent)) 8%, var(--surface));
+  border-top: 3px solid var(--dc, var(--accent));
+  transform: rotateY(180deg);
+}
+
+.fc-card-deck-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dc, var(--accent));
+  opacity: 0.8;
+}
+
+.fc-term {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.fc-reading {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+.fc-flip-hint {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  opacity: 0.55;
+  margin-top: 8px;
+}
+
+.fc-def {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  line-height: 1.75;
+  max-width: 440px;
+}
+
+/* Answer buttons */
+.fc-btn-dontknow,
+.fc-btn-knew {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.2s;
+}
+.fc-btn-dontknow { background: rgba(252,92,101,0.12); color: #fc5c65; border: 1px solid rgba(252,92,101,0.3); }
+.fc-btn-knew     { background: rgba(72,207,173,0.12);  color: #48cfad; border: 1px solid rgba(72,207,173,0.3); }
+.fc-btn-dontknow:hover { background: rgba(252,92,101,0.2); transform: scale(1.02); }
+.fc-btn-knew:hover     { background: rgba(72,207,173,0.2);  transform: scale(1.02); }

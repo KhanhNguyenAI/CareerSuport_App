@@ -38,6 +38,7 @@
         <button class="btn-ai-settings" onclick="gcOpenSettings()" title="AI設定">
           <span id="gc-header-badge">⚙️</span>
         </button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="ライトモードに切替">☀️</button>
         <a href="index.html" class="back-btn">← ホームへ</a>
         <button class="btn-logout" id="btn-logout">ログアウト</button>
       </div>
@@ -70,6 +71,9 @@
         </button>
         <button class="main-tab-btn" data-tab="tab-company" onclick="switchMainTab('tab-company')">
           🔍 企業研究
+        </button>
+        <button class="main-tab-btn" data-tab="tab-schedule" onclick="switchMainTab('tab-schedule')">
+          📅 選考管理
         </button>
       </div>
 
@@ -166,17 +170,22 @@
       <!-- ── Tab: 企業研究 ── -->
       <div class="main-tab-content" id="tab-company"></div>
 
+      <!-- ── Tab: 選考管理 ── -->
+      <div class="main-tab-content" id="tab-schedule"></div>
+
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module" id="pdfjs-script"></script>
   <script>window.GC_PAGE = 'interview';</script>
+  <script src="theme.js"></script>
   <script src="firebase-config.js"></script>
   <script src="gemini-config.js"></script>
   <script src="interview.js"></script>
   <script src="interview2.js"></script>
   <script src="exam.js"></script>
   <script src="company-search.js"></script>
+  <script src="schedule.js"></script>
   <script type="module" src="interview-app.js"></script>
 </body>
 </html>

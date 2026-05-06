@@ -574,6 +574,11 @@ window.switchMainTab = function(tabId) {
     const el = document.getElementById('tab-company');
     if (el && !el.innerHTML.trim()) window.initCompanySearch();
   }
+  // Lazy init 選考管理
+  if (tabId === 'tab-schedule' && window.initSchedule) {
+    const el = document.getElementById('tab-schedule');
+    if (el && !el.innerHTML.trim()) window.initSchedule();
+  }
 };
 window.setStudentType  = setStudentType;
 window.renderQuestion  = renderQuestion;

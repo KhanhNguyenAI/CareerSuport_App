@@ -38,15 +38,34 @@
         <button class="btn-ai-settings" onclick="gcOpenSettings()" title="AI設定">
           <span id="gc-header-badge">⚙️</span>
         </button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="ライトモードに切替">☀️</button>
         <a href="index.html" class="back-btn">← ホームへ</a>
         <button class="btn-logout" id="btn-logout">ログアウト</button>
       </div>
     </header>
 
     <div class="container">
-      <p class="section-title">取得したい資格を選択してください</p>
-      <div class="cert-grid" id="cert-grid"></div>
-      <div id="detail-panel"></div>
+
+      <!-- ── Tab bar ── -->
+      <div class="cert-main-tabs">
+        <button class="cert-tab-btn active" data-cert-tab="cert-tab-study" onclick="switchCertTab('cert-tab-study')">
+          📚 資格学習
+        </button>
+        <button class="cert-tab-btn" data-cert-tab="cert-tab-flash" onclick="switchCertTab('cert-tab-flash')">
+          🃏 フラッシュカード
+        </button>
+      </div>
+
+      <!-- ── 資格学習 tab ── -->
+      <div id="cert-tab-study" class="cert-tab-pane">
+        <p class="section-title">取得したい資格を選択してください</p>
+        <div class="cert-grid" id="cert-grid"></div>
+        <div id="detail-panel"></div>
+      </div>
+
+      <!-- ── フラッシュカード tab ── -->
+      <div id="cert-tab-flash" class="cert-tab-pane" style="display:none"></div>
+
     </div>
 
     <!-- Profile Modal -->
@@ -146,10 +165,12 @@
 
   <!-- Firebase config must be loaded first -->
   <script>window.GC_PAGE = 'cert';</script>
+  <script src="theme.js"></script>
   <script src="firebase-config.js"></script>
   <script src="gemini-config.js"></script>
   <script src="script.js"></script>
   <script src="note-panel.js"></script>
+  <script src="flashcard.js"></script>
   <script type="module" src="app.js"></script>
   <script>
     // ── E-words floating search ──

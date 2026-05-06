@@ -469,3 +469,64 @@ body {
   .fb-footer { flex-direction: column; align-items: stretch; }
   .fb-submit-btn { text-align: center; }
 }
+
+/* ════════════════════════════════════
+   🌙 LIGHT MODE
+   ════════════════════════════════════ */
+html[data-theme="light"] {
+  --bg: #f0f2fa;
+  --surface: #ffffff;
+  --surface2: #eef0fa;
+  --border: #d5d9ee;
+  --cert-color: #5b52e0;
+  --interview-color: #2aab8f;
+  --text: #1a1d2e;
+  --text-sub: #5a6280;
+}
+
+html[data-theme="light"] body { background: var(--bg); }
+
+html[data-theme="light"] .bg-grid {
+  background-image:
+    linear-gradient(rgba(108,99,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108,99,255,0.06) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .hero h1 {
+  background: linear-gradient(135deg, #1a1d2e 30%, #5b52e0 70%, #2aab8f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html[data-theme="light"] .hero-badge {
+  background: linear-gradient(90deg, rgba(108,99,255,0.1), rgba(72,207,173,0.1));
+  border-color: rgba(108,99,255,0.25);
+}
+
+html[data-theme="light"] .stat strong {
+  background: linear-gradient(135deg, #1a1d2e, #5b52e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html[data-theme="light"] .feedback-card { background: #fff; }
+html[data-theme="light"] .fb-textarea   { background: var(--surface2); color: var(--text); }
+
+/* Theme toggle for home page */
+.home-theme-btn {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-sub);
+  font-size: 1.1rem;
+  width: 40px; height: 40px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.home-theme-btn:hover { border-color: var(--cert-color); color: var(--cert-color); }

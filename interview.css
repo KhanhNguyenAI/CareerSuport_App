@@ -1219,3 +1219,262 @@ header h1 {
   header h1 { font-size: 0.95rem; }
   .exam-topic-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ════════════════════════════════════
+   🌙 LIGHT MODE
+   ════════════════════════════════════ */
+html[data-theme="light"] {
+  --bg: #f0f2fa;
+  --surface: #ffffff;
+  --surface2: #eef0fa;
+  --border: #d5d9ee;
+  --text: #1a1d2e;
+  --text-sub: #5a6280;
+}
+
+html[data-theme="light"] body { background: var(--bg); }
+
+html[data-theme="light"] header {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+html[data-theme="light"] .login-screen {
+  background: radial-gradient(ellipse at 50% 0%, #e8eaff 0%, #f0f2fa 70%);
+}
+html[data-theme="light"] .login-card {
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(108,99,255,0.12);
+}
+
+html[data-theme="light"] .main-tabs {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+html[data-theme="light"] .gc-overlay { background: rgba(0,0,0,0.35); }
+html[data-theme="light"] .gc-modal   { background: #fff; }
+
+.theme-toggle-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-sub);
+  font-size: 1rem;
+  width: 36px; height: 36px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ════════════════════════════════════
+   📅 SCHEDULE — 選考管理
+   ════════════════════════════════════ */
+
+.sc-add-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.sc-add-btn:hover { opacity: 0.88; }
+
+/* Filter buttons */
+.sc-filter-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sc-filter-btn:hover        { border-color: var(--sc, var(--accent2)); color: var(--sc, var(--accent2)); }
+.sc-filter-btn.sc-filter-active {
+  background: color-mix(in srgb, var(--sc, var(--accent2)) 12%, transparent);
+  border-color: var(--sc, var(--accent2));
+  color: var(--sc, var(--accent2));
+}
+
+/* Entry card */
+.sc-entry-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.sc-entry-card:hover { border-color: var(--accent2); }
+
+.sc-entry-left {
+  flex: 1;
+  min-width: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--border);
+}
+
+.sc-round-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  color: var(--text-sub);
+}
+
+.sc-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.sc-icon-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.sc-icon-btn:hover      { border-color: var(--accent2); }
+.sc-icon-del:hover      { border-color: #fc5c65; }
+
+/* Modal */
+.sc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sc-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  animation: fadeUp 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+
+.sc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sc-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sc-modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sc-form-row { display: flex; flex-direction: column; gap: 6px; }
+
+.sc-label { font-size: 0.72rem; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; }
+
+.sc-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.sc-input:focus { border-color: var(--accent2); }
+
+/* Status picker */
+.sc-status-pick {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sc-status-pick:hover         { border-color: var(--sc, var(--accent2)); color: var(--sc, var(--accent2)); }
+.sc-status-pick.sc-status-pick-active {
+  background: var(--scbg, rgba(108,99,255,0.12));
+  border-color: var(--sc, var(--accent2));
+  color: var(--sc, var(--accent2));
+}
+
+.sc-btn-cancel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sc-btn-cancel:hover { border-color: var(--accent4); color: var(--accent4); }
+
+.sc-btn-save {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.sc-btn-save:hover { opacity: 0.88; }
