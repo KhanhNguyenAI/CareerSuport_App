@@ -289,6 +289,8 @@ window.fcShowOnly = function (filter) {
 
 // ── Custom deck management ──
 
+let fcEditingTerm = null;   // term currently being edited (null = none)
+
 function renderFCCustom() {
   const area     = document.getElementById('fc-card-area');
   const statsBar = document.getElementById('fc-stats');
@@ -336,19 +338,49 @@ function renderFCCustom() {
         </div>
       ` : `
         <div style="display:flex;flex-direction:column;gap:8px">
-          ${cards.map(c => `
-            <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
-              <div style="flex:1;min-width:0">
-                <div style="font-size:0.88rem;font-weight:700;margin-bottom:3px;color:var(--text)">${c.term}</div>
-                <div style="font-size:0.75rem;color:var(--text-sub);line-height:1.5">${c.def}</div>
-              </div>
-              <button data-term="${c.term.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="fcDeleteCustomCard(this.dataset.term)"
-                style="flex-shrink:0;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
-                onmouseover="this.style.color='#fc5c65';this.style.borderColor='#fc5c65'"
-                onmouseout="this.style.color='';this.style.borderColor=''"
-                title="削除">🗑️</button>
-            </div>
-          `).join('')}
+          ${cards.map(c => {
+            const safeAttr = c.term.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+            const isEditing = fcEditingTerm === c.term;
+            if (isEditing) {
+              return `
+                <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1.5px solid #e879f9;border-radius:10px;padding:14px">
+                  <div style="font-size:0.7rem;font-weight:700;color:#e879f9;letter-spacing:0.5px;margin-bottom:10px">✏️ 編集中</div>
+                  <input id="fc-edit-term" type="text" value="${c.term.replace(/"/g,'&quot;')}" maxlength="80"
+                    style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem;font-weight:700;padding:8px 11px;margin-bottom:8px;outline:none;display:block">
+                  <textarea id="fc-edit-def" rows="2" maxlength="300"
+                    style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.8rem;padding:8px 11px;margin-bottom:10px;outline:none;resize:vertical;display:block">${c.def}</textarea>
+                  <div style="display:flex;gap:8px">
+                    <button data-orig="${safeAttr}" onclick="fcSaveEditCard(this.dataset.orig)"
+                      style="background:#e879f9;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;padding:7px 16px;cursor:pointer;font-family:inherit">
+                      💾 保存
+                    </button>
+                    <button onclick="fcCancelEdit()"
+                      style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-sub);font-size:0.8rem;padding:7px 14px;cursor:pointer;font-family:inherit">
+                      キャンセル
+                    </button>
+                  </div>
+                </div>`;
+            }
+            return `
+              <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:0.88rem;font-weight:700;margin-bottom:3px;color:var(--text)">${c.term}</div>
+                  <div style="font-size:0.75rem;color:var(--text-sub);line-height:1.5">${c.def}</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-shrink:0">
+                  <button data-term="${safeAttr}" onclick="fcOpenEditCard(this.dataset.term)"
+                    style="background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
+                    onmouseover="this.style.color='#e879f9';this.style.borderColor='#e879f9'"
+                    onmouseout="this.style.color='';this.style.borderColor=''"
+                    title="編集">✏️</button>
+                  <button data-term="${safeAttr}" onclick="fcDeleteCustomCard(this.dataset.term)"
+                    style="background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
+                    onmouseover="this.style.color='#fc5c65';this.style.borderColor='#fc5c65'"
+                    onmouseout="this.style.color='';this.style.borderColor=''"
+                    title="削除">🗑️</button>
+                </div>
+              </div>`;
+          }).join('')}
         </div>
       `}
     </div>
@@ -368,10 +400,37 @@ window.fcSubmitCustomCard = function () {
 
 window.fcDeleteCustomCard = function (term) {
   if (!confirm(`「${term}」を削除しますか？`)) return;
+  if (fcEditingTerm === term) fcEditingTerm = null;
   fcSaveCustom(fcLoadCustom().filter(c => c.term !== term));
   renderFCCustom();
-  const btn = document.getElementById('fc-deck-custom');
-  if (btn) { const s = btn.querySelector('span'); if (s) s.textContent = fcLoadCustom().length + '枚'; }
+};
+
+window.fcOpenEditCard = function (term) {
+  fcEditingTerm = term;
+  renderFCCustom();
+  // Focus the term input after render
+  setTimeout(() => document.getElementById('fc-edit-term')?.focus(), 50);
+};
+
+window.fcCancelEdit = function () {
+  fcEditingTerm = null;
+  renderFCCustom();
+};
+
+window.fcSaveEditCard = function (originalTerm) {
+  const newTerm = document.getElementById('fc-edit-term')?.value.trim();
+  const newDef  = document.getElementById('fc-edit-def')?.value.trim();
+  if (!newTerm) { document.getElementById('fc-edit-term')?.focus(); return; }
+  if (!newDef)  { document.getElementById('fc-edit-def')?.focus(); return; }
+
+  const cards = fcLoadCustom();
+  const idx = cards.findIndex(c => c.term === originalTerm);
+  if (idx !== -1) {
+    cards[idx] = { ...cards[idx], term: newTerm, def: newDef };
+    fcSaveCustom(cards);
+  }
+  fcEditingTerm = null;
+  renderFCCustom();
 };
 
 window.fcStartCustomQuiz = function () {
