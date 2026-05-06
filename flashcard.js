@@ -289,7 +289,8 @@ window.fcShowOnly = function (filter) {
 
 // ── Custom deck management ──
 
-let fcEditingTerm = null;   // term currently being edited (null = none)
+let fcEditingTerm  = null;   // term currently being edited (null = none)
+let fcAddFormOpen  = false;  // add-card form visibility
 
 function renderFCCustom() {
   const area     = document.getElementById('fc-card-area');
@@ -316,18 +317,32 @@ function renderFCCustom() {
         ` : ''}
       </div>
 
-      <!-- Add card form -->
-      <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:14px">
-        <div style="font-size:0.72rem;font-weight:700;color:var(--text-sub);margin-bottom:10px;letter-spacing:0.5px">＋ カードを手動追加</div>
-        <input id="fc-new-term" type="text" placeholder="用語・単語（表面）" maxlength="80"
-          style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:8px;outline:none;display:block"
-          onkeydown="if(event.key==='Enter')document.getElementById('fc-new-def').focus()">
-        <textarea id="fc-new-def" rows="2" placeholder="説明・定義（裏面）" maxlength="300"
-          style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:8px;outline:none;resize:vertical;display:block"></textarea>
-        <button onclick="fcSubmitCustomCard()"
-          style="background:var(--accent,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;padding:8px 18px;cursor:pointer;font-family:inherit">
-          追加する ＋
-        </button>
+      <!-- Add card toggle -->
+      <div>
+        ${fcAddFormOpen ? `
+          <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1.5px solid var(--accent,#6c63ff);border-radius:12px;padding:16px;animation:fadeUp 0.18s ease">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:0.75rem;font-weight:700;color:var(--accent,#6c63ff);letter-spacing:0.5px">＋ カードを追加</span>
+              <button onclick="fcToggleAddForm()" style="background:transparent;border:none;color:var(--text-sub);font-size:1rem;cursor:pointer;padding:2px 6px;line-height:1" title="閉じる">✕</button>
+            </div>
+            <input id="fc-new-term" type="text" placeholder="用語・単語（表面）" maxlength="80"
+              style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem;padding:9px 12px;margin-bottom:8px;outline:none;display:block"
+              onkeydown="if(event.key==='Enter')document.getElementById('fc-new-def').focus()">
+            <textarea id="fc-new-def" rows="2" placeholder="説明・定義（裏面）" maxlength="300"
+              style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:10px;outline:none;resize:vertical;display:block"></textarea>
+            <button onclick="fcSubmitCustomCard()"
+              style="background:var(--accent,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;padding:9px 20px;cursor:pointer;font-family:inherit">
+              追加する
+            </button>
+          </div>
+        ` : `
+          <button onclick="fcToggleAddForm()"
+            style="width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:12px;color:var(--text-sub);font-size:0.83rem;font-weight:600;padding:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.2s,color 0.2s"
+            onmouseover="this.style.borderColor='var(--accent,#6c63ff)';this.style.color='var(--accent,#6c63ff)'"
+            onmouseout="this.style.borderColor='';this.style.color=''">
+            <span style="font-size:1.1rem;line-height:1">＋</span> カードを追加
+          </button>
+        `}
       </div>
 
       <!-- Card list -->
@@ -387,6 +402,12 @@ function renderFCCustom() {
   `;
 }
 
+window.fcToggleAddForm = function () {
+  fcAddFormOpen = !fcAddFormOpen;
+  renderFCCustom();
+  if (fcAddFormOpen) setTimeout(() => document.getElementById('fc-new-term')?.focus(), 60);
+};
+
 window.fcSubmitCustomCard = function () {
   const termEl = document.getElementById('fc-new-term');
   const defEl  = document.getElementById('fc-new-def');
@@ -395,6 +416,7 @@ window.fcSubmitCustomCard = function () {
   if (!term) { termEl?.focus(); return; }
   if (!def)  { defEl?.focus(); return; }
   window.fcAddCustomCard(term, def);
+  fcAddFormOpen = false;   // collapse form after adding
   renderFCCustom();
 };
 
