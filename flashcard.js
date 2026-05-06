@@ -99,13 +99,14 @@ function fcSaveCustom(cards) {
   localStorage.setItem(FC_CUSTOM_KEY, JSON.stringify(cards));
 }
 
-window.fcAddCustomCard = function (term, def) {
+window.fcAddCustomCard = function (term, def, groupId) {
   const cards = fcLoadCustom();
   const idx = cards.findIndex(c => c.term === term);
   if (idx !== -1) {
     cards[idx].def = def;
+    if (groupId !== undefined) cards[idx].groupId = groupId || '';
   } else {
-    cards.push({ term, def, addedAt: new Date().toISOString() });
+    cards.push({ term, def, groupId: groupId || '', addedAt: new Date().toISOString() });
   }
   fcSaveCustom(cards);
   // Refresh count badge if deck selector is visible
@@ -158,7 +159,7 @@ window.fcSelectDeck = function (key, resetProgress = true) {
 
 window.fcRestart = function () {
   fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; fcFlipped = false;
-  fcCards = [...fcLoadCustom()].sort(() => Math.random() - 0.5);
+  fcCards = [...fcGetActiveCards()].sort(() => Math.random() - 0.5);
   const statsBar = document.getElementById('fc-stats');
   if (statsBar) statsBar.style.display = 'none';
   renderFCCard();
@@ -287,10 +288,28 @@ window.fcShowOnly = function (filter) {
   fcRestart();
 };
 
+// ── Groups storage ──
+const FC_GROUPS_KEY = 'fc_groups';
+const FC_GRP_COLORS = ['#6c63ff','#48cfad','#f7b731','#fc5c65','#4a90d9','#e879f9'];
+
+function fcLoadGroups() {
+  try { return JSON.parse(localStorage.getItem(FC_GROUPS_KEY) || '[]'); } catch { return []; }
+}
+function fcSaveGroups(g) { localStorage.setItem(FC_GROUPS_KEY, JSON.stringify(g)); }
+
 // ── Custom deck management ──
 
-let fcEditingTerm  = null;   // term currently being edited (null = none)
-let fcAddFormOpen  = false;  // add-card form visibility
+let fcEditingTerm  = null;     // term currently being edited
+let fcAddFormOpen  = false;    // add-card form open?
+let fcCurrentGroup = 'all';   // 'all' or group id
+let fcNewGroupOpen = false;    // new-group inline input open?
+let fcNewGroupColor = '#6c63ff';
+
+// Cards filtered by current group
+function fcGetActiveCards() {
+  const all = fcLoadCustom();
+  return fcCurrentGroup === 'all' ? all : all.filter(c => c.groupId === fcCurrentGroup);
+}
 
 function renderFCCustom() {
   const area     = document.getElementById('fc-card-area');
@@ -298,23 +317,85 @@ function renderFCCustom() {
   if (!area) return;
   if (statsBar) statsBar.style.display = 'none';
 
-  const cards = fcLoadCustom();
+  const allCards = fcLoadCustom();
+  const groups   = fcLoadGroups();
+  const filtered = fcGetActiveCards();
+
+  // group lookup helper
+  const gMap = Object.fromEntries(groups.map(g => [g.id, g]));
+
+  // group selector for forms
+  const groupSelectOptions = `
+    <option value="">グループなし</option>
+    ${groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
+  `;
 
   area.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
 
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div>
-          <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:#e879f9;text-transform:uppercase;margin-bottom:4px">✏️ カスタムカード</div>
-          <div style="font-size:0.78rem;color:var(--text-sub)">${cards.length}枚 — 自由に追加・削除できます</div>
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.5px;color:#e879f9;text-transform:uppercase;margin-bottom:4px">🃏 フラッシュカード</div>
+          <div style="font-size:0.78rem;color:var(--text-sub)">${allCards.length}枚 · ${groups.length}グループ</div>
         </div>
-        ${cards.length > 0 ? `
+        ${filtered.length > 0 ? `
           <button onclick="fcStartCustomQuiz()"
-            style="background:linear-gradient(135deg,#e879f9,#6c63ff);border:none;border-radius:10px;color:#fff;font-size:0.85rem;font-weight:700;padding:10px 18px;cursor:pointer;font-family:inherit">
-            ▶ 練習を開始 (${cards.length}枚)
+            style="background:linear-gradient(135deg,#e879f9,#6c63ff);border:none;border-radius:10px;color:#fff;font-size:0.83rem;font-weight:700;padding:9px 18px;cursor:pointer;font-family:inherit">
+            ▶ 練習 ${fcCurrentGroup==='all'?'':'('+filtered.length+'枚)'}
           </button>
         ` : ''}
+      </div>
+
+      <!-- Group bar -->
+      <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none">
+
+        <button onclick="fcSetGroup('all')"
+          style="flex-shrink:0;background:${fcCurrentGroup==='all'?'#e879f9':'transparent'};border:1px solid ${fcCurrentGroup==='all'?'#e879f9':'var(--border)'};border-radius:20px;color:${fcCurrentGroup==='all'?'#fff':'var(--text-sub)'};font-size:0.73rem;font-weight:600;padding:4px 12px;cursor:pointer;font-family:inherit;white-space:nowrap">
+          すべて <span style="opacity:0.75">${allCards.length}</span>
+        </button>
+
+        ${groups.map(g => {
+          const cnt   = allCards.filter(c => c.groupId === g.id).length;
+          const active = fcCurrentGroup === g.id;
+          return `
+            <div style="display:inline-flex;align-items:center;flex-shrink:0;border-radius:20px;border:1px solid ${active?g.color:'var(--border)'};background:${active?g.color+'22':'transparent'};overflow:hidden">
+              <button onclick="fcSetGroup('${g.id}')"
+                style="background:transparent;border:none;color:${active?g.color:'var(--text-sub)'};font-size:0.73rem;font-weight:600;padding:4px 6px 4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:5px">
+                <span style="width:7px;height:7px;border-radius:50%;background:${g.color};flex-shrink:0;display:inline-block"></span>
+                ${g.name} <span style="opacity:0.65">${cnt}</span>
+              </button>
+              <button data-gid="${g.id}" onclick="fcDeleteGroup(this.dataset.gid)"
+                style="background:transparent;border:none;color:var(--text-sub);font-size:0.68rem;padding:4px 8px 4px 2px;cursor:pointer;line-height:1;opacity:0.45"
+                onmouseover="this.style.opacity='1';this.style.color='#fc5c65'"
+                onmouseout="this.style.opacity='0.45';this.style.color=''">✕</button>
+            </div>`;
+        }).join('')}
+
+        ${fcNewGroupOpen ? `
+          <div style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;background:var(--surface2,rgba(255,255,255,0.06));border:1px solid var(--border);border-radius:20px;padding:3px 10px">
+            <input id="fc-gname" type="text" placeholder="グループ名" maxlength="16" autofocus
+              style="background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;font-size:0.75rem;width:80px"
+              onkeydown="if(event.key==='Enter')fcCreateGroup();if(event.key==='Escape')fcToggleNewGroup()">
+            <div style="display:flex;gap:3px;align-items:center">
+              ${FC_GRP_COLORS.map(col=>`
+                <button onclick="fcSetNewGroupColor('${col}')"
+                  style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid ${fcNewGroupColor===col?'#fff':'transparent'};cursor:pointer;padding:0;flex-shrink:0;box-sizing:border-box"></button>
+              `).join('')}
+            </div>
+            <button onclick="fcCreateGroup()"
+              style="background:${fcNewGroupColor};border:none;border-radius:10px;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;cursor:pointer;font-family:inherit;white-space:nowrap">作成</button>
+            <button onclick="fcToggleNewGroup()"
+              style="background:transparent;border:none;color:var(--text-sub);font-size:0.8rem;cursor:pointer;padding:0 1px;line-height:1">✕</button>
+          </div>
+        ` : `
+          <button onclick="fcToggleNewGroup()"
+            style="flex-shrink:0;background:transparent;border:1px dashed var(--border);border-radius:20px;color:var(--text-sub);font-size:0.73rem;font-weight:600;padding:4px 11px;cursor:pointer;font-family:inherit;white-space:nowrap"
+            onmouseover="this.style.borderColor='#e879f9';this.style.color='#e879f9'"
+            onmouseout="this.style.borderColor='';this.style.color=''">
+            ＋ 新グループ
+          </button>
+        `}
       </div>
 
       <!-- Add card toggle -->
@@ -323,21 +404,27 @@ function renderFCCustom() {
           <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1.5px solid var(--accent,#6c63ff);border-radius:12px;padding:16px;animation:fadeUp 0.18s ease">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <span style="font-size:0.75rem;font-weight:700;color:var(--accent,#6c63ff);letter-spacing:0.5px">＋ カードを追加</span>
-              <button onclick="fcToggleAddForm()" style="background:transparent;border:none;color:var(--text-sub);font-size:1rem;cursor:pointer;padding:2px 6px;line-height:1" title="閉じる">✕</button>
+              <button onclick="fcToggleAddForm()" style="background:transparent;border:none;color:var(--text-sub);font-size:1rem;cursor:pointer;padding:2px 6px;line-height:1">✕</button>
             </div>
             <input id="fc-new-term" type="text" placeholder="用語・単語（表面）" maxlength="80"
               style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem;padding:9px 12px;margin-bottom:8px;outline:none;display:block"
               onkeydown="if(event.key==='Enter')document.getElementById('fc-new-def').focus()">
             <textarea id="fc-new-def" rows="2" placeholder="説明・定義（裏面）" maxlength="300"
-              style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:10px;outline:none;resize:vertical;display:block"></textarea>
-            <button onclick="fcSubmitCustomCard()"
-              style="background:var(--accent,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;padding:9px 20px;cursor:pointer;font-family:inherit">
-              追加する
-            </button>
+              style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.83rem;padding:9px 12px;margin-bottom:8px;outline:none;resize:vertical;display:block"></textarea>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <select id="fc-new-group"
+                style="flex:1;min-width:120px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text-sub);font-family:inherit;font-size:0.78rem;padding:7px 10px;outline:none;cursor:pointer">
+                ${groupSelectOptions}
+              </select>
+              <button onclick="fcSubmitCustomCard()"
+                style="background:var(--accent,#6c63ff);border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;padding:9px 20px;cursor:pointer;font-family:inherit">
+                追加する
+              </button>
+            </div>
           </div>
         ` : `
           <button onclick="fcToggleAddForm()"
-            style="width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:12px;color:var(--text-sub);font-size:0.83rem;font-weight:600;padding:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.2s,color 0.2s"
+            style="width:100%;background:transparent;border:1.5px dashed var(--border);border-radius:12px;color:var(--text-sub);font-size:0.83rem;font-weight:600;padding:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px"
             onmouseover="this.style.borderColor='var(--accent,#6c63ff)';this.style.color='var(--accent,#6c63ff)'"
             onmouseout="this.style.borderColor='';this.style.color=''">
             <span style="font-size:1.1rem;line-height:1">＋</span> カードを追加
@@ -345,16 +432,21 @@ function renderFCCustom() {
         `}
       </div>
 
-      <!-- Card list -->
-      ${cards.length === 0 ? `
-        <div style="text-align:center;padding:24px 16px;color:var(--text-sub)">
-          <div style="font-size:2.5rem;margin-bottom:10px">🃏</div>
-          <div style="font-size:0.82rem;line-height:1.7">カードがまだありません。<br>上のフォームから追加するか、<br>AI用語ノートの <strong>「フラッシュカードに追加」</strong> から自動追加できます。</div>
+      <!-- Card list (filtered by group) -->
+      ${filtered.length === 0 ? `
+        <div style="text-align:center;padding:28px 16px;color:var(--text-sub)">
+          <div style="font-size:2.2rem;margin-bottom:10px">🃏</div>
+          <div style="font-size:0.82rem;line-height:1.7">
+            ${allCards.length === 0
+              ? 'カードがまだありません。<br>＋ ボタンかAI用語ノートから追加できます。'
+              : 'このグループにはカードがありません。'}
+          </div>
         </div>
       ` : `
         <div style="display:flex;flex-direction:column;gap:8px">
-          ${cards.map(c => {
+          ${filtered.map(c => {
             const safeAttr = c.term.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+            const grp      = c.groupId ? gMap[c.groupId] : null;
             const isEditing = fcEditingTerm === c.term;
             if (isEditing) {
               return `
@@ -363,36 +455,39 @@ function renderFCCustom() {
                   <input id="fc-edit-term" type="text" value="${c.term.replace(/"/g,'&quot;')}" maxlength="80"
                     style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem;font-weight:700;padding:8px 11px;margin-bottom:8px;outline:none;display:block">
                   <textarea id="fc-edit-def" rows="2" maxlength="300"
-                    style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.8rem;padding:8px 11px;margin-bottom:10px;outline:none;resize:vertical;display:block">${c.def}</textarea>
+                    style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.8rem;padding:8px 11px;margin-bottom:8px;outline:none;resize:vertical;display:block">${c.def}</textarea>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                    <select id="fc-edit-group"
+                      style="flex:1;min-width:120px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text-sub);font-family:inherit;font-size:0.78rem;padding:7px 10px;outline:none;cursor:pointer">
+                      ${groupSelectOptions.replace(`value="${c.groupId||''}"`,`value="${c.groupId||''}" selected`)}
+                    </select>
+                  </div>
                   <div style="display:flex;gap:8px">
                     <button data-orig="${safeAttr}" onclick="fcSaveEditCard(this.dataset.orig)"
-                      style="background:#e879f9;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;padding:7px 16px;cursor:pointer;font-family:inherit">
-                      💾 保存
-                    </button>
+                      style="background:#e879f9;border:none;border-radius:8px;color:#fff;font-size:0.8rem;font-weight:700;padding:7px 16px;cursor:pointer;font-family:inherit">💾 保存</button>
                     <button onclick="fcCancelEdit()"
-                      style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-sub);font-size:0.8rem;padding:7px 14px;cursor:pointer;font-family:inherit">
-                      キャンセル
-                    </button>
+                      style="background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-sub);font-size:0.8rem;padding:7px 14px;cursor:pointer;font-family:inherit">キャンセル</button>
                   </div>
                 </div>`;
             }
             return `
               <div style="background:var(--surface2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">
                 <div style="flex:1;min-width:0">
-                  <div style="font-size:0.88rem;font-weight:700;margin-bottom:3px;color:var(--text)">${c.term}</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+                    <span style="font-size:0.88rem;font-weight:700;color:var(--text)">${c.term}</span>
+                    ${grp ? `<span style="font-size:0.65rem;font-weight:600;padding:2px 7px;border-radius:10px;background:${grp.color}22;color:${grp.color};border:1px solid ${grp.color}44">${grp.name}</span>` : ''}
+                  </div>
                   <div style="font-size:0.75rem;color:var(--text-sub);line-height:1.5">${c.def}</div>
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
                   <button data-term="${safeAttr}" onclick="fcOpenEditCard(this.dataset.term)"
                     style="background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
                     onmouseover="this.style.color='#e879f9';this.style.borderColor='#e879f9'"
-                    onmouseout="this.style.color='';this.style.borderColor=''"
-                    title="編集">✏️</button>
+                    onmouseout="this.style.color='';this.style.borderColor=''" title="編集">✏️</button>
                   <button data-term="${safeAttr}" onclick="fcDeleteCustomCard(this.dataset.term)"
                     style="background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-sub);font-size:0.8rem;padding:5px 8px;cursor:pointer;font-family:inherit"
                     onmouseover="this.style.color='#fc5c65';this.style.borderColor='#fc5c65'"
-                    onmouseout="this.style.color='';this.style.borderColor=''"
-                    title="削除">🗑️</button>
+                    onmouseout="this.style.color='';this.style.borderColor=''" title="削除">🗑️</button>
                 </div>
               </div>`;
           }).join('')}
@@ -400,6 +495,14 @@ function renderFCCustom() {
       `}
     </div>
   `;
+
+  // Pre-select group in add-form if a group is active
+  if (fcAddFormOpen && fcCurrentGroup !== 'all') {
+    const sel = document.getElementById('fc-new-group');
+    if (sel) sel.value = fcCurrentGroup;
+  }
+  // Focus new-group input
+  if (fcNewGroupOpen) setTimeout(() => document.getElementById('fc-gname')?.focus(), 40);
 }
 
 window.fcToggleAddForm = function () {
@@ -415,7 +518,8 @@ window.fcSubmitCustomCard = function () {
   const def  = defEl?.value.trim();
   if (!term) { termEl?.focus(); return; }
   if (!def)  { defEl?.focus(); return; }
-  window.fcAddCustomCard(term, def);
+  const groupId = document.getElementById('fc-new-group')?.value || '';
+  window.fcAddCustomCard(term, def, groupId);
   fcAddFormOpen = false;   // collapse form after adding
   renderFCCustom();
 };
@@ -440,15 +544,16 @@ window.fcCancelEdit = function () {
 };
 
 window.fcSaveEditCard = function (originalTerm) {
-  const newTerm = document.getElementById('fc-edit-term')?.value.trim();
-  const newDef  = document.getElementById('fc-edit-def')?.value.trim();
+  const newTerm    = document.getElementById('fc-edit-term')?.value.trim();
+  const newDef     = document.getElementById('fc-edit-def')?.value.trim();
+  const newGroupId = document.getElementById('fc-edit-group')?.value || '';
   if (!newTerm) { document.getElementById('fc-edit-term')?.focus(); return; }
   if (!newDef)  { document.getElementById('fc-edit-def')?.focus(); return; }
 
   const cards = fcLoadCustom();
   const idx = cards.findIndex(c => c.term === originalTerm);
   if (idx !== -1) {
-    cards[idx] = { ...cards[idx], term: newTerm, def: newDef };
+    cards[idx] = { ...cards[idx], term: newTerm, def: newDef, groupId: newGroupId };
     fcSaveCustom(cards);
   }
   fcEditingTerm = null;
@@ -456,11 +561,56 @@ window.fcSaveEditCard = function (originalTerm) {
 };
 
 window.fcStartCustomQuiz = function () {
-  const cards = fcLoadCustom();
+  const cards = fcGetActiveCards();
   if (cards.length === 0) return;
   fcCards = [...cards].sort(() => Math.random() - 0.5);
   fcIndex = 0; fcKnew = 0; fcDidntKnow = 0; fcFlipped = false;
   renderFCCard();
+};
+
+// ── Group management ──
+
+window.fcSetGroup = function (id) {
+  fcCurrentGroup = id;
+  renderFCCustom();
+};
+
+window.fcToggleNewGroup = function () {
+  fcNewGroupOpen = !fcNewGroupOpen;
+  if (!fcNewGroupOpen) fcNewGroupColor = '#6c63ff';
+  renderFCCustom();
+  if (fcNewGroupOpen) setTimeout(() => document.getElementById('fc-gname')?.focus(), 60);
+};
+
+window.fcSetNewGroupColor = function (color) {
+  fcNewGroupColor = color;
+  renderFCCustom();
+  if (fcNewGroupOpen) setTimeout(() => document.getElementById('fc-gname')?.focus(), 60);
+};
+
+window.fcCreateGroup = function () {
+  const nameEl = document.getElementById('fc-gname');
+  const name   = nameEl?.value.trim();
+  if (!name) { nameEl?.focus(); return; }
+  const groups = fcLoadGroups();
+  const id = 'grp_' + Date.now();
+  groups.push({ id, name, color: fcNewGroupColor, createdAt: new Date().toISOString() });
+  fcSaveGroups(groups);
+  fcCurrentGroup = id;   // auto-select the new group
+  fcNewGroupOpen = false;
+  fcNewGroupColor = '#6c63ff';
+  renderFCCustom();
+};
+
+window.fcDeleteGroup = function (id) {
+  if (!confirm('このグループを削除しますか？（カードはそのまま残ります）')) return;
+  const groups = fcLoadGroups().filter(g => g.id !== id);
+  fcSaveGroups(groups);
+  // Strip groupId from any cards that belonged to this group
+  const cards = fcLoadCustom().map(c => c.groupId === id ? { ...c, groupId: '' } : c);
+  fcSaveCustom(cards);
+  if (fcCurrentGroup === id) fcCurrentGroup = 'all';
+  renderFCCustom();
 };
 
 // Tab switcher for cert page
