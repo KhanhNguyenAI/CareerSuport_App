@@ -5,9 +5,10 @@
 // ─────────────────────────────────────
 
 // Default key per page (set window.GC_PAGE before loading this script)
+// キーは env.js の window.__ENV__ から読み込みます
 const _GC_PAGE_KEYS = {
-  cert:      'AIzaSyDst9TClnMCxy70KW_rIA1H_mI0aSR0sFw',   // Part 1
-  interview: 'AIzaSyAiUoO44MuzT6tbeH_D98HglhBUDmAGdMg',   // Part 2
+  cert:      (window.__ENV__ || {}).GEMINI_KEY_CERT      || '',
+  interview: (window.__ENV__ || {}).GEMINI_KEY_INTERVIEW || '',
 };
 const _GC_DEFAULT_KEY   = _GC_PAGE_KEYS[window.GC_PAGE] || _GC_PAGE_KEYS.cert;
 const _GC_DEFAULT_MODEL = 'gemini-2.5-flash';

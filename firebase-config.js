@@ -1,16 +1,23 @@
 // ─────────────────────────────────────
 // Firebase Configuration
+// キーは env.js の window.__ENV__ から読み込みます
 // ─────────────────────────────────────
 
+const _e = window.__ENV__ || {};
+
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyASIoEesOXwOhaxp40ZbSIjzQqU1sJzcUU",
-  authDomain: "it-learning-coach.firebaseapp.com",
-  projectId: "it-learning-coach",
-  storageBucket: "it-learning-coach.firebasestorage.app",
-  messagingSenderId: "779451380190",
-  appId: "1:779451380190:web:1fb90c5d0d5583325c6d4f",
-  measurementId: "G-P7T4QJ7P3F"
+  apiKey:            _e.FIREBASE_API_KEY,
+  authDomain:        _e.FIREBASE_AUTH_DOMAIN,
+  projectId:         _e.FIREBASE_PROJECT_ID,
+  storageBucket:     _e.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: _e.FIREBASE_MESSAGING_SENDER_ID,
+  appId:             _e.FIREBASE_APP_ID,
+  measurementId:     _e.FIREBASE_MEASUREMENT_ID,
 };
+
+if (!_e.FIREBASE_API_KEY) {
+  console.error('[firebase-config] env.js が読み込まれていないか、FIREBASE_API_KEY が未設定です。');
+}
 
 // Attach to window so it's accessible by modules like auth.js
 window.FIREBASE_CONFIG = FIREBASE_CONFIG;
