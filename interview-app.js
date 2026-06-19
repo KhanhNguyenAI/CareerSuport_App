@@ -21,22 +21,25 @@ onAuthChange(async (user) => {
     appScreen.style.display   = 'block';
 
     // Sync profile from Firestore to localStorage
-    const data = await loadUserData();
-    if (data?.profile) {
-      localStorage.setItem('user_profile', JSON.stringify({
-        ...data.profile,
-        examDates: data.examDates || {},
-      }));
-    }
+    try {
+      const data = await loadUserData();
+      if (data?.profile) {
+        localStorage.setItem('user_profile', JSON.stringify({
+          ...data.profile,
+          examDates: data.examDates || {},
+        }));
+      }
 
-    // ── Sync interview schedule ──
-    const fsSchedule    = data?.schedule || [];
-    const localSchedule = JSON.parse(localStorage.getItem('interview_schedule') || '[]');
-    if (fsSchedule.length > 0) {
-      localStorage.setItem('interview_schedule', JSON.stringify(fsSchedule));
-    } else if (localSchedule.length > 0) {
-      // Migrate existing local data up to Firestore
-      saveScheduleEntries(localSchedule).catch(() => {});
+      // ── Sync interview schedule ──
+      const fsSchedule    = data?.schedule || [];
+      const localSchedule = JSON.parse(localStorage.getItem('interview_schedule') || '[]');
+      if (fsSchedule.length > 0) {
+        localStorage.setItem('interview_schedule', JSON.stringify(fsSchedule));
+      } else if (localSchedule.length > 0) {
+        saveScheduleEntries(localSchedule).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Firestore sync failed (UI will still render):', e.message);
     }
 
     // Update header avatar

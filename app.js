@@ -49,46 +49,49 @@ onAuthChange(async (firebaseUser) => {
     appScreen.style.display   = 'block';
 
     // Load data from Firestore → sync to localStorage
-    const userData = await loadUserData();
-    if (userData) {
-      if (userData.profile) {
-        const profileData = {
-          ...userData.profile,
-          examDates: userData.examDates || {},
-        };
-        localStorage.setItem('user_profile', JSON.stringify(profileData));
-      }
-      if (userData.vocabNotes) {
-        localStorage.setItem('vocab_notes', JSON.stringify(userData.vocabNotes));
-        // also merge into user_profile so note-panel.js can read it
-        const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
-        pr.vocabNotes   = userData.vocabNotes;
-        pr.manualNotes  = userData.manualNotes || [];
-        localStorage.setItem('user_profile', JSON.stringify(pr));
-      }
+    // Wrapped in try/catch so UI always renders even if Firestore fails
+    try {
+      const userData = await loadUserData();
+      if (userData) {
+        if (userData.profile) {
+          const profileData = {
+            ...userData.profile,
+            examDates: userData.examDates || {},
+          };
+          localStorage.setItem('user_profile', JSON.stringify(profileData));
+        }
+        if (userData.vocabNotes) {
+          localStorage.setItem('vocab_notes', JSON.stringify(userData.vocabNotes));
+          const pr = JSON.parse(localStorage.getItem('user_profile') || '{}');
+          pr.vocabNotes   = userData.vocabNotes;
+          pr.manualNotes  = userData.manualNotes || [];
+          localStorage.setItem('user_profile', JSON.stringify(pr));
+        }
 
-      // ── Sync custom flashcards & groups ──
-      const fsCards  = userData.customCards || [];
-      const fsGroups = userData.cardGroups  || [];
-      const localCards  = JSON.parse(localStorage.getItem('fc_custom_cards') || '[]');
-      const localGroups = JSON.parse(localStorage.getItem('fc_groups')        || '[]');
-      if (fsCards.length > 0) {
-        localStorage.setItem('fc_custom_cards', JSON.stringify(fsCards));
-      } else if (localCards.length > 0) {
-        // Migrate existing local data up to Firestore
-        saveCustomCards(localCards).catch(() => {});
+        // ── Sync custom flashcards & groups ──
+        const fsCards  = userData.customCards || [];
+        const fsGroups = userData.cardGroups  || [];
+        const localCards  = JSON.parse(localStorage.getItem('fc_custom_cards') || '[]');
+        const localGroups = JSON.parse(localStorage.getItem('fc_groups')        || '[]');
+        if (fsCards.length > 0) {
+          localStorage.setItem('fc_custom_cards', JSON.stringify(fsCards));
+        } else if (localCards.length > 0) {
+          saveCustomCards(localCards).catch(() => {});
+        }
+        if (fsGroups.length > 0) {
+          localStorage.setItem('fc_groups', JSON.stringify(fsGroups));
+        } else if (localGroups.length > 0) {
+          saveCardGroups(localGroups).catch(() => {});
+        }
       }
-      if (fsGroups.length > 0) {
-        localStorage.setItem('fc_groups', JSON.stringify(fsGroups));
-      } else if (localGroups.length > 0) {
-        saveCardGroups(localGroups).catch(() => {});
-      }
+    } catch (e) {
+      console.warn('Firestore sync failed (UI will still render):', e.message);
     }
 
     // Update header with Google avatar
     updateGoogleAvatar(firebaseUser);
 
-    // Initialize UI
+    // Initialize UI — always runs regardless of Firestore errors
     if (window.renderCertCards)     window.renderCertCards();
     if (window.updateHeaderProfile) window.updateHeaderProfile();
     npShowFloat();
